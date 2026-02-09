@@ -1,15 +1,12 @@
 import axios from "axios";
 
 const api = axios.create({
-  // 🔴 Local development ke liye (future me use kar sakte ho)
-  // baseURL: "http://localhost:5000/api",
-
-  // 🟢 Production backend (CURRENT)
-  baseURL: "https://librarymanagementbackend-ztsr.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://librarymanagementbackend-ztsr.onrender.com/api",
 
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 10000,
 });
 
 /* ================= REQUEST INTERCEPTOR ================= */
