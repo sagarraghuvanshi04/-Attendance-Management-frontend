@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const api = axios.create({
+  // 🔴 Local development ke liye (future me use kar sakte ho)
   // baseURL: "http://localhost:5000/api",
+
+  // 🟢 Production backend (CURRENT)
   baseURL: "https://librarymanagementbackend-ztsr.onrender.com/api",
 
   headers: {
@@ -31,7 +34,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    const url = error.config?.url;
+    const url = error.config?.url || "";
 
     if (
       status === 401 &&
