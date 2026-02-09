@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Hide scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}
+
+.overflow-y-auto {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide cursor/caret in all input fields */
+* {
+  caret-color: transparent !important;
+}
