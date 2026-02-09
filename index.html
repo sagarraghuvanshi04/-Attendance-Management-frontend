@@ -9,5 +9,11 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Keep Render backend alive
+      setInterval(() => {
+        fetch('https://librarymanagementbackend-ztsr.onrender.com/health').catch(() => {});
+      }, 10 * 60 * 1000);
+    </script>
   </body>
 </html>
