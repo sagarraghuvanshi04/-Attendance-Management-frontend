@@ -1,12 +1,12 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://librarymanagementbackend-ztsr.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://librarymanagementbackend-ztsr.onrender.com/api",
 
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000,
+  timeout: 30000,
 });
 
 /* ================= REQUEST INTERCEPTOR ================= */
