@@ -12,33 +12,30 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    
-    const handleNotificationsRead = () => {
-      fetchUnreadCount();
-    };
-    window.addEventListener('notificationsRead', handleNotificationsRead);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('notificationsRead', handleNotificationsRead);
-    };
-  }, []);
-
   const fetchUnreadCount = async () => {
     try {
       const { data } = await api.get("/notifications");
       if (data.success) {
-        const readNotifications = JSON.parse(localStorage.getItem("adminReadNotifications") || "[]");
-        const unread = data.notifications.filter(n => !readNotifications.includes(n._id));
-        setUnreadCount(unread.length);
+        const unread = data.notifications.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
     }
   };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    const handleNotificationsRead = () => {
+      fetchUnreadCount();
+    };
+    window.addEventListener('notificationsRead', handleNotificationsRead);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('notificationsRead', handleNotificationsRead);
+    };
+  }, []);
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/admin" },
@@ -59,13 +56,9 @@ const AdminLayout = () => {
   ];
 
   const handleLogout = () => {
-  // Remove token and user data
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-
-  navigate("/");
-};
-
+    localStorage.clear();
+    navigate("/");
+  };
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -88,16 +81,16 @@ const AdminLayout = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all relative ${
+              className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all ${
                 location.pathname === item.path
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               {item.icon}
-              {item.label}
+              <span className="flex-1">{item.label}</span>
               {item.label === "Notifications" && unreadCount > 0 && (
-                <span className="absolute right-3 h-5 w-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center animate-pulse">
+                <span className="h-5 w-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center animate-pulse flex-shrink-0">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
@@ -112,6 +105,17 @@ const AdminLayout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between z-10">
+          <h1 className="text-2xl font-black text-slate-800">Admin Panel</h1>
+          <Link to="/admin/notifications" className="relative p-3 hover:bg-slate-100 rounded-xl transition-all">
+            <Bell size={24} className="text-slate-600" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 h-5 w-5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center animate-pulse">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+        </div>
         <div className="p-8 max-w-7xl mx-auto">
           <Outlet />
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Users, Calendar, CheckCircle2, XCircle, X, Loader2, Search, Filter } from "lucide-react";
 import api from "../../services/api";
+import ManualAttendance from "../../components/ManualAttendance";
 
 const Attendance = () => {
   const [presentStudents, setPresentStudents] = useState([]);
@@ -120,6 +121,11 @@ const Attendance = () => {
 
   return (
     <div className="p-4 space-y-6">
+      {/* Manual Attendance Section */}
+      <ManualAttendance onAttendanceAdded={fetchTodayPresentStudents} />
+
+      {/* Today's Attendance Section */}
+      <div className="p-4 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-800">Today's Attendance</h1>
@@ -331,6 +337,7 @@ const Attendance = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

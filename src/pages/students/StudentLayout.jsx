@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { LogOut, LayoutDashboard, User, Bell, CreditCard, Clock, Lock, Menu, X, MessageSquare, BookOpen, Brain } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "../../services/api";
+import { getCachedData, setCachedData } from "../../services/cache";
 
 const StudentLayout = () => {
   const navigate = useNavigate();
@@ -10,15 +11,12 @@ const StudentLayout = () => {
 
   useEffect(() => {
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000); // Check every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
     
-    // Listen for localStorage changes (when notifications are marked as read)
     const handleStorageChange = () => {
       fetchUnreadCount();
     };
     window.addEventListener('storage', handleStorageChange);
-    
-    // Custom event for same-tab updates
     window.addEventListener('notificationsRead', handleStorageChange);
     
     return () => {
@@ -32,9 +30,8 @@ const StudentLayout = () => {
     try {
       const { data } = await api.get("/notifications");
       if (data.success) {
-        const readNotifications = JSON.parse(localStorage.getItem("readNotifications") || "[]");
-        const unread = data.notifications.filter(n => !readNotifications.includes(n._id));
-        setUnreadCount(unread.length);
+        const unread = data.notifications.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
@@ -42,8 +39,7 @@ const StudentLayout = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("studentToken"); 
-    localStorage.removeItem("user");
+    localStorage.clear();
     navigate("/");
   };
 

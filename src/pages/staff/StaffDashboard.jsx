@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api"; 
+import { getCachedData, setCachedData } from "../../services/cache";
 import { 
   Users, QrCode, LogIn, LogOut, 
   Clock, ArrowRight, MapPin, Inbox, Search, ChevronRight
@@ -27,27 +28,48 @@ const StaffDashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 2. Fetch Data from Backend using Custom API Instance
+  // 2. Fetch Data from Backend with Caching
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Ab headers manually bhejne ki zaroorat nahi, Interceptor handle kar lega
-        const [profileRes, activityRes] = await Promise.all([
-          api.get("/staff/profile"),
-          api.get("/staff/activity")
-        ]);
+        // Try to use cached data first
+        const cachedProfile = getCachedData("staffProfile");
+        const cachedActivity = getCachedData("dashboardActivity");
 
-        if (profileRes.data.success) setStaffInfo(profileRes.data.staff);
-        if (activityRes.data.success) {
+        if (cachedProfile) setStaffInfo(cachedProfile);
+        if (cachedActivity) {
           setActivityData({
-            stats: activityRes.data.stats,
-            scans: activityRes.data.scans
+            stats: cachedActivity.stats || { active: 0, arrivals: 0, departures: 0, totalStudents: 0 },
+            scans: cachedActivity.scans || []
           });
         }
+
+        setLoading(false);
+
+        // Fetch fresh data in background
+        try {
+          const [profileRes, activityRes] = await Promise.all([
+            api.get("/staff/profile"),
+            api.get("/staff/activity")
+          ]);
+
+          if (profileRes.data?.success) {
+            setStaffInfo(profileRes.data.staff);
+            setCachedData("staffProfile", profileRes.data.staff);
+          }
+          if (activityRes.data?.success) {
+            const newActivityData = {
+              stats: activityRes.data.stats || { active: 0, arrivals: 0, departures: 0, totalStudents: 0 },
+              scans: activityRes.data.scans || []
+            };
+            setActivityData(newActivityData);
+            setCachedData("dashboardActivity", newActivityData);
+          }
+        } catch (error) {
+          console.error("Background sync error:", error.message);
+        }
       } catch (error) {
-        // 401 Error Interceptor handle kar raha hai, yaha sirf general logging hogi
-        console.error("Dashboard Sync Failed");
-      } finally {
+        console.error("Dashboard Sync Failed:", error.message);
         setLoading(false);
       }
     };
@@ -82,6 +104,9 @@ const StaffDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("staffToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("HTML5_QRCODE_DATA");
+    localStorage.removeItem("lastSeenNotification");
+    localStorage.removeItem("readNotifications");
     navigate("/");
   };
 

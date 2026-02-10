@@ -8,12 +8,9 @@ const Notifications = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [readNotifications, setReadNotifications] = useState([]);
 
   useEffect(() => {
     fetchNotifications();
-    const read = JSON.parse(localStorage.getItem("adminReadNotifications") || "[]");
-    setReadNotifications(read);
   }, []);
 
   const fetchNotifications = async () => {
@@ -28,17 +25,24 @@ const Notifications = () => {
     }
   };
 
-  const markAsRead = (notifId) => {
-    if (!readNotifications.includes(notifId)) {
-      const updated = [...readNotifications, notifId];
-      setReadNotifications(updated);
-      localStorage.setItem("adminReadNotifications", JSON.stringify(updated));
+  const markAsRead = async (notifId) => {
+    try {
+      await api.post("/notifications/mark-read", {
+        notificationIds: [notifId],
+      });
+      setNotifications(notifications.map(n => 
+        n._id === notifId ? { ...n, isRead: true } : n
+      ));
       window.dispatchEvent(new Event('notificationsRead'));
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
     }
   };
 
   const handleNotificationClick = (notif) => {
-    markAsRead(notif._id);
+    if (!notif.isRead) {
+      markAsRead(notif._id);
+    }
     if (notif.title === "New Payment Request") {
       navigate("/admin/payments");
     }
@@ -57,8 +61,7 @@ const Notifications = () => {
     }
   };
 
-  const isUnread = (notifId) => !readNotifications.includes(notifId);
-  const unreadCount = notifications.filter(n => isUnread(n._id)).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   if (loading) {
     return (
@@ -86,7 +89,7 @@ const Notifications = () => {
 
       <div className="grid grid-cols-1 gap-6">
         {notifications.length > 0 ? notifications.map(notif => {
-          const unread = isUnread(notif._id);
+          const unread = !notif.isRead;
           return (
             <div 
               key={notif._id} 

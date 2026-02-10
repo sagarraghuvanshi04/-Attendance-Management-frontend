@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import { Brain, Plus, X, Trash2 } from "lucide-react";
+import { Brain, Plus, X, Trash2, Eye } from "lucide-react";
 
 const ManageQuiz = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [results, setResults] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     date: new Date().toISOString().split("T")[0],
@@ -32,6 +35,17 @@ const ManageQuiz = () => {
       console.error("Failed to fetch quizzes:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchResults = async (quizId) => {
+    try {
+      const res = await api.get(`/quiz/${quizId}/results`);
+      setResults(res.data.results || []);
+      setSelectedQuiz(res.data.quiz);
+      setShowResults(true);
+    } catch (err) {
+      toast.error("Failed to fetch results");
     }
   };
 
@@ -102,6 +116,93 @@ const ManageQuiz = () => {
     );
   }
 
+  if (showResults) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-black text-slate-800">Quiz Results</h2>
+            <p className="text-slate-500 font-medium">{selectedQuiz?.title}</p>
+          </div>
+          <button
+            onClick={() => setShowResults(false)}
+            className="px-6 py-3 bg-slate-100 text-slate-700 rounded-2xl font-bold hover:bg-slate-200"
+          >
+            Back
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="p-4 bg-indigo-50 rounded-xl">
+              <p className="text-sm text-indigo-600 font-bold">Total Questions</p>
+              <p className="text-2xl font-black text-indigo-700">{selectedQuiz?.totalQuestions}</p>
+            </div>
+            <div className="p-4 bg-green-50 rounded-xl">
+              <p className="text-sm text-green-600 font-bold">Students Attempted</p>
+              <p className="text-2xl font-black text-green-700">{results.length}</p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-xl">
+              <p className="text-sm text-blue-600 font-bold">Avg Score</p>
+              <p className="text-2xl font-black text-blue-700">
+                {results.length > 0
+                  ? (results.reduce((sum, r) => sum + r.score, 0) / results.length).toFixed(1)
+                  : 0}
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-slate-200">
+                  <th className="text-left py-3 px-4 font-bold text-slate-700">Student ID</th>
+                  <th className="text-left py-3 px-4 font-bold text-slate-700">Name</th>
+                  <th className="text-left py-3 px-4 font-bold text-slate-700">Email</th>
+                  <th className="text-center py-3 px-4 font-bold text-slate-700">Score</th>
+                  <th className="text-center py-3 px-4 font-bold text-slate-700">Percentage</th>
+                  <th className="text-left py-3 px-4 font-bold text-slate-700">Completed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((result, idx) => (
+                  <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4 text-sm text-slate-600">{result.student?.studentId}</td>
+                    <td className="py-3 px-4 text-sm font-bold text-slate-800">{result.student?.name}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">{result.student?.email}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg font-bold text-sm">
+                        {result.score}/{selectedQuiz?.totalQuestions}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`px-3 py-1 rounded-lg font-bold text-sm ${
+                        (result.score / selectedQuiz?.totalQuestions) * 100 >= 70
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}>
+                        {((result.score / selectedQuiz?.totalQuestions) * 100).toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600">
+                      {new Date(result.completedAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {results.length === 0 && (
+            <div className="text-center py-8 text-slate-400">
+              <p className="font-bold">No attempts yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -122,7 +223,7 @@ const ManageQuiz = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {quizzes.map((quiz) => (
-          <div key={quiz._id} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+          <div key={quiz._id} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-start justify-between mb-3">
               <Brain size={32} className="text-indigo-600" />
               <span className="text-xs font-bold px-2 py-1 rounded-lg bg-green-50 text-green-600">
@@ -133,7 +234,13 @@ const ManageQuiz = () => {
             <p className="text-sm text-slate-600 mb-1">
               Date: {new Date(quiz.date).toLocaleDateString()}
             </p>
-            <p className="text-sm text-slate-600">Duration: {quiz.duration} minutes</p>
+            <p className="text-sm text-slate-600 mb-4">Duration: {quiz.duration} minutes</p>
+            <button
+              onClick={() => fetchResults(quiz._id)}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-600 py-2 rounded-lg font-bold hover:bg-indigo-100 transition-all"
+            >
+              <Eye size={16} /> View Results
+            </button>
           </div>
         ))}
       </div>

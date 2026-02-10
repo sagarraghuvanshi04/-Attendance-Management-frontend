@@ -11,7 +11,6 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [readNotifications, setReadNotifications] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     message: "",
@@ -20,8 +19,6 @@ const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const read = JSON.parse(localStorage.getItem("staffReadNotifications") || "[]");
-    setReadNotifications(read);
   }, []);
 
   const fetchNotifications = async () => {
@@ -37,17 +34,26 @@ const Notifications = () => {
     }
   };
 
-  const markAsRead = (notifId) => {
-    if (!readNotifications.includes(notifId)) {
-      const updated = [...readNotifications, notifId];
-      setReadNotifications(updated);
-      localStorage.setItem("staffReadNotifications", JSON.stringify(updated));
+  const markAsRead = async (notifId) => {
+    try {
+      await api.post("/notifications/mark-read", {
+        notificationIds: [notifId],
+      });
+      setNotifications(prev => 
+        prev.map(n => 
+          n._id === notifId ? { ...n, isRead: true } : n
+        )
+      );
       window.dispatchEvent(new Event('notificationsRead'));
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
     }
   };
 
   const handleNotificationClick = (notif) => {
-    markAsRead(notif._id);
+    if (!notif.isRead) {
+      markAsRead(notif._id);
+    }
     if (notif.title === "New Payment Request") {
       navigate("/staff/payments");
     }
@@ -102,8 +108,7 @@ const Notifications = () => {
     }
   };
 
-  const isUnread = (notifId) => !readNotifications.includes(notifId);
-  const unreadCount = notifications.filter(n => isUnread(n._id)).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   if (loading) {
     return <Loader message="Loading Notifications..." />;
@@ -150,7 +155,7 @@ const Notifications = () => {
       <div className="space-y-4">
         {notifications.length > 0 ? (
           notifications.map((notif) => {
-            const unread = isUnread(notif._id);
+            const unread = !notif.isRead;
             return (
               <div
                 key={notif._id}

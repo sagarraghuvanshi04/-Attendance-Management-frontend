@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { getCachedData, setCachedData } from "../../services/cache";
 import { 
   QrCode, Users, MessageSquare, LogOut, 
   Menu, X, Bell, UserCircle, LayoutDashboard,
@@ -19,9 +20,8 @@ const StaffLayout = () => {
     try {
       const { data } = await api.get("/notifications");
       if (data.success) {
-        const readNotifications = JSON.parse(localStorage.getItem("staffReadNotifications") || "[]");
-        const unread = data.notifications.filter(n => !readNotifications.includes(n._id));
-        setUnreadCount(unread.length);
+        const unread = data.notifications.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
       }
     } catch (err) {
       console.error("Failed to fetch notifications:", err);
@@ -31,32 +31,32 @@ const StaffLayout = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        const cachedProfile = getCachedData("staffProfile");
+        if (cachedProfile) {
+          setStaffInfo(cachedProfile);
+        }
         const res = await api.get("/staff/profile");
-        if (res.data.success) {
+        if (res.data?.success) {
           setStaffInfo(res.data.staff);
+          setCachedData("staffProfile", res.data.staff);
         }
       } catch (error) {
-        console.error("Failed to fetch profile");
+        console.error("Failed to fetch profile:", error);
+        if (!staffInfo) {
+          const cachedProfile = getCachedData("staffProfile");
+          if (cachedProfile) setStaffInfo(cachedProfile);
+        }
       }
     };
     fetchProfile();
-
     fetchUnreadCount();
     const interval = setInterval(fetchUnreadCount, 30000);
-
-    // Listen for profile updates
-    const handleProfileUpdate = (event) => {
-      setStaffInfo(event.detail);
-    };
     const handleNotificationsRead = () => {
       fetchUnreadCount();
     };
-    window.addEventListener('staffProfileUpdated', handleProfileUpdate);
     window.addEventListener('notificationsRead', handleNotificationsRead);
-
     return () => {
       clearInterval(interval);
-      window.removeEventListener('staffProfileUpdated', handleProfileUpdate);
       window.removeEventListener('notificationsRead', handleNotificationsRead);
     };
   }, []);
@@ -77,8 +77,7 @@ const StaffLayout = () => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("staffToken");
-    localStorage.removeItem("user");
+    localStorage.clear();
     navigate("/");
   };
 
@@ -229,7 +228,7 @@ const StaffLayout = () => {
               ))}
             </div>
 
-            <button className="flex items-center justify-center gap-3 w-full bg-rose-50 text-rose-600 py-5 rounded-[2rem] font-black text-sm mt-8">
+            <button onClick={handleLogout} className="flex items-center justify-center gap-3 w-full bg-rose-50 text-rose-600 py-5 rounded-[2rem] font-black text-sm mt-8">
               <LogOut size={20} /> Logout
             </button>
           </nav>

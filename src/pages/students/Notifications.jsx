@@ -5,13 +5,9 @@ import { Bell, Clock, AlertCircle, Info as InfoIcon } from "lucide-react";
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [readNotifications, setReadNotifications] = useState([]);
 
   useEffect(() => {
     fetchNotifications();
-    // Load read notifications from localStorage
-    const read = JSON.parse(localStorage.getItem("readNotifications") || "[]");
-    setReadNotifications(read);
   }, []);
 
   const fetchNotifications = async () => {
@@ -27,19 +23,29 @@ const Notifications = () => {
     }
   };
 
-  const markAsRead = (notifId) => {
-    if (!readNotifications.includes(notifId)) {
-      const updated = [...readNotifications, notifId];
-      setReadNotifications(updated);
-      localStorage.setItem("readNotifications", JSON.stringify(updated));
-      // Dispatch custom event to update sidebar count
+  const markAsRead = async (notifId) => {
+    try {
+      await api.post("/notifications/mark-read", {
+        notificationIds: [notifId],
+      });
+      setNotifications(prev =>
+        prev.map(n => 
+          n._id === notifId ? { ...n, isRead: true } : n
+        )
+      );
       window.dispatchEvent(new Event('notificationsRead'));
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
     }
   };
 
-  const isUnread = (notifId) => !readNotifications.includes(notifId);
+  const handleNotificationClick = (notif) => {
+    if (!notif.isRead) {
+      markAsRead(notif._id);
+    }
+  };
 
-  const unreadCount = notifications.filter(n => isUnread(n._id)).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const typeColors = {
     info: { read: "bg-slate-50 text-slate-600 border-slate-200", unread: "bg-blue-100 text-blue-700 border-blue-300" },
@@ -76,13 +82,13 @@ const Notifications = () => {
       <div className="space-y-3 md:space-y-4">
         {notifications.length > 0 ? (
           notifications.map((notif) => {
-            const unread = isUnread(notif._id);
+            const unread = !notif.isRead;
             const colors = typeColors[notif.type] || typeColors.info;
             
             return (
               <div
                 key={notif._id}
-                onClick={() => markAsRead(notif._id)}
+                onClick={() => handleNotificationClick(notif)}
                 className={`p-4 md:p-6 rounded-2xl md:rounded-[2rem] border-2 transition-all cursor-pointer hover:shadow-md ${
                   unread ? colors.unread : colors.read
                 } ${unread ? 'animate-in fade-in slide-in-from-top duration-300' : ''}`}

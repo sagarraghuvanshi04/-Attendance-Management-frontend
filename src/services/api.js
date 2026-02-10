@@ -1,13 +1,20 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://librarymanagementbackend-ztsr.onrender.com/api",
-
+  // baseURL: "http://localhost:5000/api",
+  baseURL: "https://university-management-api.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000,
+  timeout: 60000,
 });
+
+// Request deduplication
+const pendingRequests = new Map();
+
+const getRequestKey = (config) => {
+  return `${config.method}:${config.url}`;
+};
 
 /* ================= REQUEST INTERCEPTOR ================= */
 api.interceptors.request.use(
@@ -21,6 +28,14 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // Deduplication for GET requests
+    if (config.method === "get") {
+      const key = getRequestKey(config);
+      if (pendingRequests.has(key)) {
+        return pendingRequests.get(key);
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -28,10 +43,21 @@ api.interceptors.request.use(
 
 /* ================= RESPONSE INTERCEPTOR ================= */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.config.method === "get") {
+      const key = getRequestKey(response.config);
+      pendingRequests.delete(key);
+    }
+    return response;
+  },
   (error) => {
     const status = error.response?.status;
     const url = error.config?.url || "";
+
+    if (error.config?.method === "get") {
+      const key = getRequestKey(error.config);
+      pendingRequests.delete(key);
+    }
 
     if (
       status === 401 &&
