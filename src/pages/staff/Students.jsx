@@ -22,10 +22,11 @@ const Students = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/students");
+      const res = await api.get("/students", { params: { page: 1, limit: 50 } });
       setStudents(res.data.students || []);
     } catch (err) {
       console.error("Failed to load students", err);
+      toast.error("Failed to load students");
     } finally {
       setLoading(false);
     }

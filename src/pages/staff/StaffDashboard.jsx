@@ -4,8 +4,9 @@ import api from "../../services/api";
 import { getCachedData, setCachedData } from "../../services/cache";
 import { 
   Users, QrCode, LogIn, LogOut, 
-  Clock, ArrowRight, MapPin, Inbox, Search, ChevronRight
+  Clock, ArrowRight, MapPin, Inbox, Search, ChevronRight, Zap, Bell
 } from "lucide-react";
+import Loader from "../../components/Loader";
 
 const StaffDashboard = () => {
   const navigate = useNavigate();
@@ -112,20 +113,13 @@ const StaffDashboard = () => {
 
   // UI rendering logic for Stats
   const stats = [
-    { label: "Total Students", value: activityData.stats.totalStudents.toString(), color: "text-indigo-600", bg: "bg-indigo-50", icon: <Users /> },
+    { label: "Total Students", value: activityData.stats.totalStudents.toString(), color: "text-blue-600", bg: "bg-blue-50", icon: <Users /> },
     { label: "Arrivals Today", value: activityData.stats.arrivals.toString(), color: "text-emerald-600", bg: "bg-emerald-50", icon: <LogIn /> },
     { label: "Departures Today", value: activityData.stats.departures.toString(), color: "text-amber-600", bg: "bg-amber-50", icon: <LogOut /> },
   ];
 
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-black text-indigo-600 animate-pulse uppercase tracking-widest">Live Syncing...</p>
-        </div>
-      </div>
-    );
+    return <Loader message="Live Syncing..." />;
   }
 
   return (
@@ -203,45 +197,100 @@ const StaffDashboard = () => {
 
       {/* --- Stats Grid --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="group bg-white p-6 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500">
-            <div className="flex justify-between items-start mb-4 md:mb-6">
-              <div className={`h-12 w-12 md:h-14 md:w-14 ${stat.bg} ${stat.color} rounded-xl md:rounded-2xl flex items-center justify-center`}>
-                {React.cloneElement(stat.icon, { size: 24, className: "md:w-7 md:h-7" })}
+        {stats.map((stat, idx) => {
+          const getNavigationPath = (label) => {
+            switch(label) {
+              case "Total Students": return "/staff/students";
+              case "Arrivals Today": return "/staff/attendance?filter=arrivals";
+              case "Departures Today": return "/staff/attendance?filter=departures";
+              default: return "/staff/dashboard";
+            }
+          };
+          
+          return (
+            <button 
+              key={idx} 
+              onClick={() => navigate(getNavigationPath(stat.label))}
+              className="group bg-white p-6 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-500 hover:scale-105 cursor-pointer text-left w-full"
+            >
+              <div className="flex justify-between items-start mb-4 md:mb-6">
+                <div className={`h-12 w-12 md:h-14 md:w-14 ${stat.bg} ${stat.color} rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  {React.cloneElement(stat.icon, { size: 24, className: "md:w-7 md:h-7" })}
+                </div>
+                <ArrowRight size={16} className="text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
               </div>
-            </div>
-            <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter">{stat.value}</h3>
-            </div>
-          </div>
-        ))}
+              <p className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{stat.label}</p>
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter group-hover:text-indigo-600 transition-colors">{stat.value}</h3>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* --- Content Grid --- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-        {/* Capacity */}
+        {/* Quick Actions */}
         <div className="lg:col-span-5 bg-white p-6 md:p-10 rounded-2xl md:rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
-          <h3 className="font-black text-slate-800 text-lg md:text-xl mb-6 md:mb-8 flex items-center gap-2"><MapPin size={18} className="md:w-5 md:h-5" /> Occupancy</h3>
-          <div className="space-y-6 md:space-y-8 relative z-10">
-            <div>
-              <div className="flex justify-between items-end mb-3 font-black text-xs text-slate-600">
-                <span>HALL A</span>
-                <span>{activityData.stats.active}/50</span>
+          <h3 className="font-black text-slate-800 text-lg md:text-xl mb-6 md:mb-8 flex items-center gap-2"><Zap size={18} className="md:w-5 md:h-5" /> Quick Actions</h3>
+          <div className="grid grid-cols-2 gap-4 md:gap-6">
+            <button 
+              onClick={() => navigate('/staff/scanner')}
+              className="group p-4 md:p-6 bg-indigo-50 hover:bg-indigo-100 rounded-2xl md:rounded-3xl border border-indigo-100 transition-all hover:scale-105"
+            >
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-indigo-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <QrCode size={20} className="md:w-6 md:h-6 text-white" />
               </div>
-              <div className="h-3 md:h-4 w-full bg-slate-50 rounded-full overflow-hidden p-1 border border-slate-100">
-                <div className="h-full bg-indigo-600 rounded-full transition-all duration-1000" style={{ width: `${(activityData.stats.active / 50) * 100}%` }}></div>
+              <p className="font-black text-indigo-900 text-sm md:text-base">QR Scanner</p>
+              <p className="text-xs text-indigo-600 font-medium">Scan student entry/exit</p>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/staff/students')}
+              className="group p-4 md:p-6 bg-emerald-50 hover:bg-emerald-100 rounded-2xl md:rounded-3xl border border-emerald-100 transition-all hover:scale-105"
+            >
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Users size={20} className="md:w-6 md:h-6 text-white" />
               </div>
-            </div>
-            <div className="p-4 bg-indigo-50 rounded-2xl md:rounded-3xl border border-indigo-100/50">
-              <p className="text-xs font-bold text-indigo-900 leading-relaxed">Terminal ID: {staffInfo?.staffId} Active</p>
-            </div>
+              <p className="font-black text-emerald-900 text-sm md:text-base">Students</p>
+              <p className="text-xs text-emerald-600 font-medium">Manage student data</p>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/staff/attendance')}
+              className="group p-4 md:p-6 bg-amber-50 hover:bg-amber-100 rounded-2xl md:rounded-3xl border border-amber-100 transition-all hover:scale-105"
+            >
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-amber-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Clock size={20} className="md:w-6 md:h-6 text-white" />
+              </div>
+              <p className="font-black text-amber-900 text-sm md:text-base">Attendance</p>
+              <p className="text-xs text-amber-600 font-medium">View daily records</p>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/staff/notifications')}
+              className="group p-4 md:p-6 bg-purple-50 hover:bg-purple-100 rounded-2xl md:rounded-3xl border border-purple-100 transition-all hover:scale-105"
+            >
+              <div className="h-12 w-12 md:h-14 md:w-14 bg-purple-600 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Bell size={20} className="md:w-6 md:h-6 text-white" />
+              </div>
+              <p className="font-black text-purple-900 text-sm md:text-base">Notifications</p>
+              <p className="text-xs text-purple-600 font-medium">Send announcements</p>
+            </button>
           </div>
         </div>
 
         {/* Live Feed */}
         <div className="lg:col-span-7 bg-white p-6 md:p-10 rounded-2xl md:rounded-[3.5rem] border border-slate-100 shadow-sm">
-          <h3 className="font-black text-slate-800 text-lg md:text-xl mb-6 md:mb-8">Live Scan Feed</h3>
+          <div className="flex items-center justify-between mb-6 md:mb-8">
+            <h3 className="font-black text-slate-800 text-lg md:text-xl">Live Scan Feed</h3>
+            <button 
+              onClick={() => navigate('/staff/attendance')}
+              className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 hover:gap-2 transition-all"
+            >
+              View All <ArrowRight size={14} />
+            </button>
+          </div>
           <div className="space-y-3">
             {activityData.scans.length > 0 ? (
               activityData.scans.map((scan) => (

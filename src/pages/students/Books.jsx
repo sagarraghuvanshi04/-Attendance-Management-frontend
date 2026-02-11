@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import { BookOpen, Search, User, X, Calendar, Hash, Building2 } from "lucide-react";
+import Loader from "../../components/Loader";
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -31,11 +32,7 @@ const Books = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <Loader message="Loading Books..." />;
   }
 
   return (

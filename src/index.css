@@ -10,6 +10,16 @@
   scrollbar-width: none;
 }
 
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Hide cursor/caret in all input fields */
 * {
   caret-color: transparent !important;

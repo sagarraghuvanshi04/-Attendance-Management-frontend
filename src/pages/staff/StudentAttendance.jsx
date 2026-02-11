@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Users, Calendar, CheckCircle2, XCircle, X, Loader2, Search, Filter } from "lucide-react";
+import { Users, Calendar, CheckCircle2, XCircle, X, Search, Filter, AlertCircle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import api from "../../services/api";
 import ManualAttendance from "../../components/ManualAttendance";
+import Loader from "../../components/Loader";
 
 const Attendance = () => {
+  const [searchParams] = useSearchParams();
+  const filterType = searchParams.get('filter'); // 'arrivals' or 'departures'
+  
   const [presentStudents, setPresentStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,14 +20,24 @@ const Attendance = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [searchQuery, setSearchQuery] = useState("");
   const [seatFilter, setSeatFilter] = useState("All");
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     fetchTodayPresentStudents();
-  }, []);
+  }, [filterType]); // Re-fetch when filter changes
 
   const fetchTodayPresentStudents = async () => {
     try {
-      const { data } = await api.get("/attendance/today-present");
+      let endpoint = "/attendance/today-all";
+      
+      // Apply filter based on URL parameter
+      if (filterType === 'arrivals') {
+        endpoint = "/attendance/today-arrivals";
+      } else if (filterType === 'departures') {
+        endpoint = "/attendance/today-departures";
+      }
+      
+      const { data } = await api.get(endpoint);
       if (data.success) {
         setPresentStudents(data.students);
         setFilteredStudents(data.students);
@@ -107,16 +122,13 @@ const Attendance = () => {
     setAttendanceStats({});
     setCurrentMonth(new Date().getMonth());
     setCurrentYear(new Date().getFullYear());
+    setSelectedDate(null);
   };
 
   const uniqueSeats = [...new Set(presentStudents.map(s => s.seat?.charAt(0)).filter(Boolean))];
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-500" size={40} />
-      </div>
-    );
+    return <Loader message="Loading Attendance..." />;
   }
 
   return (
@@ -128,11 +140,19 @@ const Attendance = () => {
       <div className="p-4 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800">Today's Attendance</h1>
-          <p className="text-slate-500 font-medium mt-1">Students present today - Click to view monthly calendar</p>
+          <h1 className="text-3xl font-black text-slate-800">
+            {filterType === 'arrivals' ? "Today's Arrivals" : 
+             filterType === 'departures' ? "Today's Departures" : 
+             "Today's Attendance"}
+          </h1>
+          <p className="text-slate-500 font-medium mt-1">
+            {filterType === 'arrivals' ? "Students who entered today" : 
+             filterType === 'departures' ? "Students who left today" : 
+             "All students with their attendance status"} - Click to view monthly calendar
+          </p>
         </div>
         <div className="bg-indigo-100 px-6 py-3 rounded-2xl">
-          <p className="text-sm font-bold text-indigo-600">Total Present</p>
+          <p className="text-sm font-bold text-indigo-600">Total Students</p>
           <p className="text-3xl font-black text-indigo-700">{filteredStudents.length} / {presentStudents.length}</p>
         </div>
       </div>
@@ -182,14 +202,24 @@ const Attendance = () => {
                   <h3 className="font-black text-slate-800 text-lg group-hover:text-indigo-600 transition-colors">{student.name}</h3>
                   <p className="text-sm font-bold text-slate-400">{student.studentId}</p>
                 </div>
-                <div className="bg-green-100 p-2 rounded-lg">
-                  <CheckCircle2 className="text-green-600" size={20} />
+                <div className={`p-2 rounded-lg ${
+                  student.status === "Present" ? "bg-green-100" :
+                  student.status === "Absent" ? "bg-red-100" :
+                  "bg-slate-100"
+                }`}>
+                  {student.status === "Present" ? <CheckCircle2 className="text-green-600" size={20} /> :
+                   student.status === "Absent" ? <XCircle className="text-red-600" size={20} /> :
+                   <AlertCircle className="text-slate-600" size={20} />}
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500 font-medium">Seat: <span className="font-bold text-slate-700">{student.seat || "N/A"}</span></span>
-                <span className="text-slate-500 font-medium">
-                  {student.entryTime ? new Date(student.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}
+                <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${
+                  student.status === "Present" ? "text-green-600 bg-green-50" :
+                  student.status === "Absent" ? "text-red-600 bg-red-50" :
+                  "text-slate-600 bg-slate-50"
+                }`}>
+                  {student.status}
                 </span>
               </div>
             </div>
@@ -212,8 +242,10 @@ const Attendance = () => {
             </div>
 
             {modalLoading ? (
-              <div className="flex items-center justify-center p-12">
-                <Loader2 className="animate-spin text-indigo-500" size={40} />
+              <div className="p-12">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                </div>
               </div>
             ) : (
               <div className="p-6 space-y-6">
@@ -290,10 +322,19 @@ const Attendance = () => {
 
                         return (
                           <div 
-                            key={i} 
-                            className={`h-12 w-12 rounded-xl flex items-center justify-center text-sm font-bold transition-all
-                              ${isPresent ? "bg-green-500 text-white shadow-md" : 
-                                isAbsent ? "bg-red-500 text-white shadow-md" : 
+                            key={i}
+                            onClick={() => {
+                              const logData = studentAttendance.find(log => {
+                                const logDate = new Date(log.date);
+                                return logDate.getDate() === day && 
+                                       logDate.getMonth() === currentMonth && 
+                                       logDate.getFullYear() === currentYear;
+                              });
+                              if (logData) setSelectedDate(logData);
+                            }}
+                            className={`h-12 w-12 rounded-xl flex items-center justify-center text-sm font-bold transition-all cursor-pointer
+                              ${isPresent ? "bg-green-500 text-white shadow-md hover:shadow-lg" : 
+                                isAbsent ? "bg-red-500 text-white shadow-md hover:shadow-lg" : 
                                 "bg-slate-100 text-slate-600"}
                               ${isToday && isPresent ? "ring-4 ring-green-400 scale-110" : ""}
                               ${isToday && isAbsent ? "ring-4 ring-red-400 scale-110" : ""}`}
@@ -334,6 +375,76 @@ const Attendance = () => {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Date Detail Popup */}
+      {selectedDate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={() => setSelectedDate(null)}>
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-black text-slate-800">Attendance Details</h3>
+              <button onClick={() => setSelectedDate(null)} className="p-2 hover:bg-slate-100 rounded-xl">
+                <X size={20} className="text-slate-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-4 rounded-2xl">
+                <p className="text-xs font-bold text-slate-400 uppercase mb-1">Date</p>
+                <p className="text-lg font-black text-slate-800">
+                  {new Date(selectedDate.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+
+              <div className={`p-4 rounded-2xl ${
+                selectedDate.status === 'Present' ? 'bg-green-50' : 'bg-red-50'
+              }`}>
+                <p className="text-xs font-bold uppercase mb-1" style={{
+                  color: selectedDate.status === 'Present' ? '#16a34a' : '#dc2626'
+                }}>
+                  Status
+                </p>
+                <p className="text-lg font-black" style={{
+                  color: selectedDate.status === 'Present' ? '#16a34a' : '#dc2626'
+                }}>
+                  {selectedDate.status}
+                </p>
+              </div>
+
+              {selectedDate.entryTime && (
+                <div className="bg-blue-50 p-4 rounded-2xl">
+                  <p className="text-xs font-bold text-blue-600 uppercase mb-1">Entry Time</p>
+                  <p className="text-lg font-black text-blue-700">
+                    {new Date(selectedDate.entryTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              )}
+
+              {selectedDate.exitTime && (
+                <div className="bg-purple-50 p-4 rounded-2xl">
+                  <p className="text-xs font-bold text-purple-600 uppercase mb-1">Exit Time</p>
+                  <p className="text-lg font-black text-purple-700">
+                    {new Date(selectedDate.exitTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              )}
+
+              {selectedDate.workingHours > 0 && (
+                <div className="bg-amber-50 p-4 rounded-2xl">
+                  <p className="text-xs font-bold text-amber-600 uppercase mb-1">Working Hours</p>
+                  <p className="text-lg font-black text-amber-700">{selectedDate.workingHours} hrs</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setSelectedDate(null)}
+              className="w-full mt-6 bg-indigo-600 text-white py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

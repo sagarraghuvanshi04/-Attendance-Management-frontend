@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import { MessageSquare, Clock, CheckCircle, XCircle, AlertCircle, Send, Loader2 } from "lucide-react";
+import { MessageSquare, Clock, CheckCircle, XCircle, AlertCircle, Send } from "lucide-react";
+import Loader from "../../components/Loader";
 
 const Complaints = () => {
   const [complaints, setComplaints] = useState([]);
@@ -65,11 +66,7 @@ const Complaints = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="animate-spin text-indigo-600" size={40} />
-      </div>
-    );
+    return <Loader message="Loading Complaints..." />;
   }
 
   return (

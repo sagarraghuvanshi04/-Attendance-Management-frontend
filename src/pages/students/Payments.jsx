@@ -5,7 +5,8 @@ import "jspdf-autotable";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import api from "../../services/api";
-import toast from "react-hot-toast"; 
+import toast from "react-hot-toast";
+import Loader from "../../components/Loader"; 
 
 const Payments = () => {
   const [showPricing, setShowPricing] = useState(false);
@@ -350,7 +351,7 @@ const Payments = () => {
     doc.save(`Receipt_${tx.transactionId || tx.id}.pdf`);
   };
 
-  if (loading) return <p className="p-6 md:p-10 text-center font-bold text-slate-600">Loading payment history...</p>;
+  if (loading) return <Loader message="Loading Payments..." />;
 
   return (
     <div className="p-4 md:p-6 mx-auto space-y-4 md:space-y-6 max-w-7xl">

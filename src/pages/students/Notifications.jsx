@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
 import { Bell, Clock, AlertCircle, Info as InfoIcon } from "lucide-react";
+import Loader from "../../components/Loader";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -62,7 +63,7 @@ const Notifications = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-10 font-bold text-slate-400">Loading...</div>;
+    return <Loader message="Loading Notifications..." />;
   }
 
   return (

@@ -27,6 +27,7 @@ const AdminAttendanceView = () => {
       setRecentAttendance(res.data.attendance || []);
     } catch (err) {
       console.error("Failed to fetch recent attendance:", err);
+      toast.error("Failed to load attendance");
     }
   };
 
@@ -47,6 +48,7 @@ const AdminAttendanceView = () => {
       setSearchResults(res.data.students || res.data.staff || []);
     } catch (err) {
       console.error("Search error:", err);
+      toast.error("Search failed");
     }
   };
 
@@ -60,16 +62,11 @@ const AdminAttendanceView = () => {
       const endpoint = activeTab === "student"
         ? `/attendance/student/${person._id}`
         : `/staff-attendance/staff/${person._id}`;
-      console.log('Calling API:', endpoint);
-      console.log('Person:', person);
       const res = await api.get(endpoint);
-      console.log('API Response:', res.data);
-      console.log('Attendance data:', res.data.attendance);
       setAttendance(res.data.attendance || []);
     } catch (err) {
       console.error('Attendance fetch error:', err);
-      console.error('Error response:', err.response?.data);
-      toast.error("Failed to load attendance");
+      toast.error(err.response?.data?.message || "Failed to load attendance");
     } finally {
       setLoading(false);
     }

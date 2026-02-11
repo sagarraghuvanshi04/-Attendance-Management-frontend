@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LogOut, LayoutDashboard, User, Bell, CreditCard, Clock, Lock, Menu, X, MessageSquare, BookOpen, Brain } from "lucide-react";
+import { LogOut, LayoutDashboard, User, Bell, CreditCard, Clock, Lock, Menu, X, MessageSquare, BookOpen, Brain, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import { getCachedData, setCachedData } from "../../services/cache";
@@ -66,12 +66,12 @@ const StudentLayout = () => {
       </div>
 
       {/* SIDEBAR - Desktop */}
-      <aside className="w-64 bg-white border-r hidden md:flex flex-col fixed h-full z-30">
-        <div className="p-8 text-2xl font-black text-indigo-600 italic">
+      <aside className="w-64 bg-white border-r hidden md:flex flex-col fixed h-full z-30 overflow-hidden">
+        <div className="p-8 text-2xl font-black text-indigo-600 italic flex-shrink-0">
           SP DIGI LAB
         </div>
 
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto scrollbar-hide">
           <SidebarLink to="/student/overview" icon={<LayoutDashboard />} label="Overview" />
           <SidebarLink to="/student/profile" icon={<User />} label="My Profile" />
           <SidebarLink to="/student/attendance" icon={<Clock />} label="Attendance" />
@@ -85,12 +85,13 @@ const StudentLayout = () => {
             badge={unreadCount}
           />
           <SidebarLink to="/student/complaints" icon={<MessageSquare />} label="Complaints" />
+          <SidebarLink to="/student/contact" icon={<Phone />} label="Contact Us" />
           <SidebarLink to="/student/security" icon={<Lock />} label="Security" />
         </nav>
 
         <button
           onClick={handleLogout}
-          className="m-4 flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-xl font-semibold"
+          className="m-4 flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-xl font-semibold flex-shrink-0"
         >
           <LogOut size={18} /> Logout
         </button>
@@ -100,15 +101,15 @@ const StudentLayout = () => {
       {sidebarOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
-          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white z-50 md:hidden flex flex-col animate-in slide-in-from-left duration-300">
-            <div className="p-6 flex items-center justify-between border-b">
+          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white z-50 md:hidden flex flex-col animate-in slide-in-from-left duration-300 overflow-hidden">
+            <div className="p-6 flex items-center justify-between border-b flex-shrink-0">
               <div className="text-2xl font-black text-indigo-600 italic">SP DIGI LAB</div>
               <button onClick={() => setSidebarOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg">
                 <X size={20} />
               </button>
             </div>
 
-            <nav className="flex-1 px-4 py-4 space-y-2">
+            <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto scrollbar-hide">
               <SidebarLink to="/student/overview" icon={<LayoutDashboard />} label="Overview" onClick={() => setSidebarOpen(false)} />
               <SidebarLink to="/student/profile" icon={<User />} label="My Profile" onClick={() => setSidebarOpen(false)} />
               <SidebarLink to="/student/attendance" icon={<Clock />} label="Attendance" onClick={() => setSidebarOpen(false)} />
@@ -123,12 +124,13 @@ const StudentLayout = () => {
                 onClick={() => setSidebarOpen(false)}
               />
               <SidebarLink to="/student/complaints" icon={<MessageSquare />} label="Complaints" onClick={() => setSidebarOpen(false)} />
+              <SidebarLink to="/student/contact" icon={<Phone />} label="Contact Us" onClick={() => setSidebarOpen(false)} />
               <SidebarLink to="/student/security" icon={<Lock />} label="Security" onClick={() => setSidebarOpen(false)} />
             </nav>
 
             <button
               onClick={handleLogout}
-              className="m-4 flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-xl font-semibold"
+              className="m-4 flex items-center gap-3 p-3 text-red-500 hover:bg-red-50 rounded-xl font-semibold flex-shrink-0"
             >
               <LogOut size={18} /> Logout
             </button>

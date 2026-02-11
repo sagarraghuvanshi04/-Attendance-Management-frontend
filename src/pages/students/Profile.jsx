@@ -4,6 +4,7 @@ import api from "../../services/api";
 import { User, Phone, Armchair, Clock, ShieldCheck, Mail, Check, X, Camera, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import toast from "react-hot-toast";
+import Loader from "../../components/Loader";
 
 const Profile = () => {
   const fileInputRef = useRef(null);
@@ -174,7 +175,7 @@ const Profile = () => {
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
   };
 
-  if (loading) return <p className="p-10 text-center font-bold">Loading profile...</p>;
+  if (loading) return <Loader message="Loading Profile..." />;
 
   return (
     <div className="p-4 md:p-6 mx-auto space-y-6 animate-in fade-in duration-500 max-w-6xl">

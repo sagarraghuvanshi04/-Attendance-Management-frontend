@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { 
-  Armchair, CreditCard, Bell, ArrowRight, TrendingUp, Calendar, Zap, QrCode, ShieldCheck, CheckCircle, XCircle 
+  Armchair, CreditCard, Bell, ArrowRight, TrendingUp, Calendar, Zap, QrCode, ShieldCheck, CheckCircle, XCircle, LogOut
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -36,8 +36,10 @@ const Overview = () => {
             status: student.status || "Active",
             announcements: student.announcements || [],
             rules: student.rules || [],
-            todayPresent: todayAtt.present || false,
-            entryTime: todayAtt.entryTime || null
+            attendanceStatus: todayAtt.status || "Not Marked",
+            entryTime: todayAtt.entryTime || null,
+            exitTime: todayAtt.exitTime || null,
+            workingHours: todayAtt.workingHours || 0
           });
         }
       } catch (err) {
@@ -58,6 +60,11 @@ const Overview = () => {
   const percentage = studentData.totalDays
     ? (studentData.daysLeft / studentData.totalDays) * 100
     : 0;
+
+  const formatTime = (time) => {
+    if (!time) return "-";
+    return new Date(time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/30">
@@ -84,20 +91,34 @@ const Overview = () => {
 
         {/* Today Status Badge */}
         <div className={`p-4 rounded-2xl flex items-center justify-between ${
-          studentData.todayPresent 
+          studentData.attendanceStatus === "Present"
             ? 'bg-gradient-to-r from-emerald-500 to-green-500' 
+            : studentData.attendanceStatus === "Absent"
+            ? 'bg-gradient-to-r from-rose-500 to-red-500'
             : 'bg-gradient-to-r from-slate-400 to-slate-500'
         } shadow-lg`}>
-          <div className="flex items-center gap-3">
-            {studentData.todayPresent ? <CheckCircle size={24} className="text-white" /> : <XCircle size={24} className="text-white" />}
-            <div className="text-white">
+          <div className="flex items-center gap-3 flex-1">
+            {studentData.attendanceStatus === "Present" ? <CheckCircle size={24} className="text-white" /> : studentData.attendanceStatus === "Absent" ? <XCircle size={24} className="text-white" /> : <XCircle size={24} className="text-white" />}
+            <div className="text-white flex-1">
               <p className="text-xs font-bold opacity-90">Today's Status</p>
-              <p className="text-lg font-black">{studentData.todayPresent ? 'Present ✓' : 'Not Marked'}</p>
+              <p className="text-lg font-black">{studentData.attendanceStatus === "Present" ? "Present ✓" : studentData.attendanceStatus === "Absent" ? "Absent ✗" : "Not Marked"}</p>
+              {studentData.attendanceStatus === "Present" && (
+                <div className="text-xs font-medium opacity-90 mt-1 flex items-center gap-2">
+                  <span>{formatTime(studentData.entryTime)}</span>
+                  {studentData.exitTime && (
+                    <>
+                      <span>→</span>
+                      <span>{formatTime(studentData.exitTime)}</span>
+                      <span className="ml-1">({studentData.workingHours} hrs)</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <button 
             onClick={() => navigate('/student/scan-attendance')}
-            className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-white/30 transition-all"
+            className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-white/30 transition-all flex-shrink-0"
           >
             <QrCode size={16} /> Scan
           </button>

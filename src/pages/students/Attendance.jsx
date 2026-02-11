@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Info, Loader2, X, LogOut } from "lucide-react";
-import api from "../../services/api"; 
+import { Calendar as CalendarIcon, CheckCircle2, XCircle, Clock, Info, X, LogOut } from "lucide-react";
+import api from "../../services/api";
+import Loader from "../../components/Loader"; 
 
 const Attendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState([]);
@@ -34,12 +35,15 @@ const Attendance = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-500" size={40} />
-      </div>
-    );
+    return <Loader message="Loading Attendance..." />;
   }
+
+  // Sort logs: newest first (descending)
+  const sortedLogs = [...attendanceLogs].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA;
+  });
 
   return (
     <div className="p-2 md:p-4 mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-700">
@@ -68,12 +72,12 @@ const Attendance = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* --- Left: Calendar Heatmap --- */}
-        <div className="lg:col-span-2 bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 shadow-sm border border-slate-100 overflow-x-auto">
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 md:gap-4 mb-4 md:mb-6 min-w-max sm:min-w-0">
-            <h3 className="text-base md:text-xl font-black text-slate-800 tracking-tight whitespace-nowrap">
-              {new Date(currentYear, currentMonth).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
-            </h3>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+        <div className="lg:col-span-2 bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 shadow-sm border border-slate-100">
+          <div className="flex flex-col gap-3 md:gap-4 mb-4 md:mb-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+              <h3 className="text-base md:text-xl font-black text-slate-800 tracking-tight">
+                {new Date(currentYear, currentMonth).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+              </h3>
               <div className="flex gap-1 md:gap-2">
                 <button 
                   onClick={() => {
@@ -106,17 +110,17 @@ const Attendance = () => {
                   →
                 </button>
               </div>
-              <div className="flex gap-1 text-[9px] md:text-xs font-bold flex-wrap">
-                <span className="flex items-center gap-1 text-white bg-green-500 px-2 py-0.5 rounded">● Student</span>
-                <span className="flex items-center gap-1 text-white bg-purple-500 px-2 py-0.5 rounded">● Staff/Admin</span>
-                <span className="flex items-center gap-1 text-white bg-red-500 px-2 py-0.5 rounded">● Absent</span>
-              </div>
+            </div>
+            <div className="flex gap-1 text-[8px] md:text-xs font-bold flex-wrap">
+              <span className="flex items-center gap-1 text-white bg-green-500 px-2 py-0.5 rounded">● Student</span>
+              <span className="flex items-center gap-1 text-white bg-purple-500 px-2 py-0.5 rounded">● Staff/Admin</span>
+              <span className="flex items-center gap-1 text-white bg-red-500 px-2 py-0.5 rounded">● Absent</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 md:gap-3">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center text-[9px] md:text-xs font-bold text-slate-500 pb-1 md:pb-2">
+          <div className="grid grid-cols-7 gap-1 md:gap-2">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+              <div key={day} className="text-center text-[8px] md:text-xs font-bold text-slate-500 pb-1 md:pb-2">
                 {day}
               </div>
             ))}
@@ -130,7 +134,7 @@ const Attendance = () => {
               const days = [];
 
               for (let i = 0; i < firstDay; i++) {
-                days.push(<div key={`empty-${i}`} className="h-10 md:h-16 bg-slate-50 rounded"></div>);
+                days.push(<div key={`empty-${i}`} className="h-6 md:h-12 bg-slate-50 rounded"></div>);
               }
 
               for (let day = 1; day <= daysInMonth; day++) {
@@ -175,7 +179,7 @@ const Attendance = () => {
                   <button
                     key={day}
                     onClick={() => log && setSelectedLog(log)}
-                    className={`h-10 md:h-16 rounded-lg border-2 p-1 md:p-2 transition-all text-[9px] md:text-sm font-bold ${
+                    className={`h-6 md:h-12 rounded-lg border-2 p-0.5 md:p-2 transition-all text-[7px] md:text-sm font-bold ${
                       isToday ? "border-indigo-600 bg-indigo-50" : "border-slate-100"
                     } ${log ? "cursor-pointer hover:shadow-lg" : "cursor-default"} ${bgColor} ${textColor} flex items-center justify-center`}
                   >
@@ -193,9 +197,16 @@ const Attendance = () => {
         <div className="bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 shadow-sm border border-slate-100">
           <h3 className="text-base md:text-lg font-black text-slate-800 mb-4">Recent Logs</h3>
           <div className="max-h-[300px] md:max-h-[400px] overflow-y-auto space-y-2 md:space-y-4 pr-2">
-            {attendanceLogs.length > 0 ? attendanceLogs.map((log, index) => {
+            {sortedLogs.length > 0 ? sortedLogs.map((log, index) => {
               const isStudentMarked = log.markedBy === 'STUDENT';
               const isStaffAdminMarked = log.markedBy === 'STAFF' || log.markedBy === 'ADMIN';
+              const isSystemMarked = log.markedBy === 'SYSTEM';
+              
+              // For auto absent (SYSTEM marked), show current time or entry time if available
+              const displayTime = log.entryTime 
+                ? new Date(log.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : (isSystemMarked ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-");
+              
               return (
               <div key={index} className="flex items-center justify-between p-2 md:p-3 rounded-xl hover:bg-slate-50 transition-colors group">
                 <div className="flex items-center gap-2 md:gap-3 min-w-0">
@@ -207,7 +218,8 @@ const Attendance = () => {
                         {new Date(log.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                     </p>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                        {log.entryTime ? new Date(log.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}
+                        {displayTime}
+                        {log.exitTime ? ` → ${new Date(log.exitTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ""}
                     </p>
                   </div>
                 </div>
@@ -241,7 +253,7 @@ const Attendance = () => {
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl text-sm">
                 <span className="font-bold text-green-700">Entry Time</span>
                 <span className="font-black text-green-700">
-                  {selectedLog.entryTime ? new Date(selectedLog.entryTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                  {selectedLog.entryTime ? new Date(selectedLog.entryTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : (selectedLog.markedBy === 'SYSTEM' ? 'Auto Marked' : '-')}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl text-sm">
@@ -268,7 +280,7 @@ const Attendance = () => {
                 <div className="flex items-center justify-between p-3 bg-purple-50 rounded-xl text-sm">
                   <span className="font-bold text-purple-700">Marked By</span>
                   <span className="px-2 py-1 rounded-lg text-xs font-black bg-purple-500 text-white">
-                    {selectedLog.markedBy}
+                    {selectedLog.markedBy === 'SYSTEM' ? 'Auto Marked' : selectedLog.markedBy}
                   </span>
                 </div>
               )}

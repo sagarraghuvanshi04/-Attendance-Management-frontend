@@ -35,6 +35,7 @@ const ScanAttendance = React.lazy(() => import("./pages/students/ScanAttendance"
 const StudentComplaints = React.lazy(() => import("./pages/students/Complaints"));
 const StudentBooks = React.lazy(() => import("./pages/students/Books"));
 const StudentQuiz = React.lazy(() => import("./pages/students/Quiz"));
+const ContactUs = React.lazy(() => import("./pages/students/ContactUs"));
 
 // Lazy load Staff pages
 const StaffLayout = React.lazy(() => import("./pages/staff/StaffLayout"));
@@ -104,6 +105,7 @@ const App = () => {
             <Route path="quiz" element={<StudentQuiz />} />
             <Route path="notifications" element={<StudentNotifications />} />
             <Route path="complaints" element={<StudentComplaints />} />
+            <Route path="contact" element={<ContactUs />} />
             <Route path="security" element={<Security />} />
           </Route>
 

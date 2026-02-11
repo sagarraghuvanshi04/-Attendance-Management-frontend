@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
+import Loader from "../../components/Loader";
 
 const ManageStudents = () => {
   const navigate = useNavigate();
@@ -177,11 +178,7 @@ const ManageStudents = () => {
   });
 
   if (loading && students.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <Loader message="Loading Students..." />;
   }
 
   return (

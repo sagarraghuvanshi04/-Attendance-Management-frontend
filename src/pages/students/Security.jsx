@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Smartphone, Globe, ArrowRight, ShieldAlert, IdCard, QrCode, Loader2, Library, X, Download } from "lucide-react";
+import { Lock, Smartphone, Globe, ArrowRight, ShieldAlert, IdCard, QrCode, Library, X, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import html2canvas from "html2canvas";
 import api from "../../services/api";
+import Loader from "../../components/Loader";
 
 const Security = () => {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ const Security = () => {
     }
   };
 
-  if (loading) return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-indigo-600" size={40} /></div>;
+  if (loading) return <Loader message="Loading Security..." />;
 
   const libraryDetails = {
     name: "SUCCESS POINT",
