@@ -56,6 +56,21 @@ const MyAttendance = () => {
       : 0
   };
 
+  // Calculate monthly stats
+  const getMonthlyStats = () => {
+    const { year, month } = getDaysInMonth(selectedMonth);
+    const monthlyAttendance = attendance.filter(a => {
+      const attDate = new Date(a.date);
+      return attDate.getMonth() === month && attDate.getFullYear() === year;
+    });
+    
+    return {
+      totalPresent: monthlyAttendance.filter(a => a.status === "Present").length,
+      totalAbsent: monthlyAttendance.filter(a => a.status === "Absent").length,
+      totalDays: monthlyAttendance.length
+    };
+  };
+
   // Calendar functions
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -78,9 +93,25 @@ const MyAttendance = () => {
   };
 
   const changeMonth = (direction) => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
     setSelectedMonth(prev => {
       const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + direction);
+      const newMonth = prev.getMonth() + direction;
+      const newYear = prev.getFullYear();
+      
+      // Don't allow going to future months
+      if (direction === 1) {
+        const targetDate = new Date(newYear, newMonth, 1);
+        const todayDate = new Date(currentYear, currentMonth, 1);
+        if (targetDate > todayDate) {
+          return prev; // Don't change if trying to go to future
+        }
+      }
+      
+      newDate.setMonth(newMonth);
       return newDate;
     });
   };
@@ -91,7 +122,7 @@ const MyAttendance = () => {
     
     // Empty cells before first day
     for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(<div key={`empty-${i}`} className="h-20 bg-slate-50 rounded-lg"></div>);
+      days.push(<div key={`empty-${i}`} className="h-12 bg-slate-50 rounded-xl"></div>);
     }
     
     // Days of month
@@ -99,30 +130,20 @@ const MyAttendance = () => {
       const currentDate = new Date(year, month, day);
       const att = getAttendanceForDate(currentDate);
       const isToday = currentDate.toDateString() === new Date().toDateString();
+      const isPresent = att?.status === "Present";
+      const isAbsent = att?.status === "Absent";
       
       days.push(
         <div
           key={day}
-          className={`h-20 rounded-lg border-2 p-2 transition-all ${
-            isToday ? "border-indigo-600 bg-indigo-50" : "border-slate-100 bg-white"
-          }`}
+          className={`h-12 w-12 rounded-xl flex items-center justify-center text-sm font-bold transition-all cursor-pointer
+            ${isPresent ? "bg-green-500 text-white shadow-md hover:shadow-lg" : 
+              isAbsent ? "bg-red-500 text-white shadow-md hover:shadow-lg" : 
+              "bg-slate-100 text-slate-600"}
+            ${isToday && isPresent ? "ring-4 ring-green-400 scale-110" : ""}
+            ${isToday && isAbsent ? "ring-4 ring-red-400 scale-110" : ""}`}
         >
-          <div className="flex justify-between items-start mb-1">
-            <span className={`text-sm font-bold ${
-              isToday ? "text-indigo-600" : "text-slate-600"
-            }`}>{day}</span>
-            {att && (
-              <div className={`h-2 w-2 rounded-full ${
-                att.status === "Present" ? "bg-green-500" : "bg-red-500"
-              }`}></div>
-            )}
-          </div>
-          {att && (
-            <div className="text-[10px] text-slate-500">
-              <div>{att.checkIn ? new Date(att.checkIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '-'}</div>
-              {att.workingHours && <div className="font-bold text-indigo-600">{att.workingHours}h</div>}
-            </div>
-          )}
+          {day}
         </div>
       );
     }
@@ -235,6 +256,22 @@ const MyAttendance = () => {
           </div>
         ) : view === "calendar" ? (
           <div className="p-6">
+            {/* Monthly Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-green-50 p-4 rounded-2xl text-center">
+                <p className="text-sm font-bold text-green-600">Present</p>
+                <p className="text-3xl font-black text-green-700">{getMonthlyStats().totalPresent}</p>
+              </div>
+              <div className="bg-red-50 p-4 rounded-2xl text-center">
+                <p className="text-sm font-bold text-red-600">Absent</p>
+                <p className="text-3xl font-black text-red-700">{getMonthlyStats().totalAbsent}</p>
+              </div>
+              <div className="bg-indigo-50 p-4 rounded-2xl text-center">
+                <p className="text-sm font-bold text-indigo-600">Total Days</p>
+                <p className="text-3xl font-black text-indigo-700">{getMonthlyStats().totalDays}</p>
+              </div>
+            </div>
+            
             <div className="flex items-center justify-between mb-6">
               <button
                 onClick={() => changeMonth(-1)}
@@ -242,7 +279,8 @@ const MyAttendance = () => {
               >
                 <ChevronLeft size={20} />
               </button>
-              <h3 className="text-xl font-black text-slate-800">
+              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                <Calendar size={20} />
                 {selectedMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
               </h3>
               <button
@@ -252,6 +290,12 @@ const MyAttendance = () => {
                 <ChevronRight size={20} />
               </button>
             </div>
+            
+            <div className="flex gap-2 text-xs font-bold mb-4 justify-end">
+              <span className="flex items-center gap-1 text-white bg-green-500 px-3 py-1 rounded-lg">● Present</span>
+              <span className="flex items-center gap-1 text-white bg-red-500 px-3 py-1 rounded-lg">● Absent</span>
+            </div>
+            
             <div className="grid grid-cols-7 gap-2 mb-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                 <div key={day} className="text-center text-xs font-bold text-slate-500 py-2">
@@ -259,7 +303,7 @@ const MyAttendance = () => {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-3">
               {renderCalendar()}
             </div>
           </div>
@@ -295,7 +339,7 @@ const MyAttendance = () => {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-bold text-slate-800">
-                        {record.workingHours ? `${record.workingHours} hrs` : '-'}
+                        {record.checkOut && record.workingHours ? `${record.workingHours} hrs` : '-'}
                       </p>
                     </td>
                     <td className="px-6 py-4">

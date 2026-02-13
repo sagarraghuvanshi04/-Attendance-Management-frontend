@@ -82,6 +82,21 @@ const AdminAttendanceView = () => {
     return { daysInMonth, startingDayOfWeek, year, month };
   };
 
+  // Calculate monthly stats
+  const getMonthlyStats = () => {
+    const { year, month } = getDaysInMonth(selectedMonth);
+    const monthlyAttendance = attendance.filter(a => {
+      const attDate = new Date(a.date);
+      return attDate.getMonth() === month && attDate.getFullYear() === year;
+    });
+    
+    return {
+      totalPresent: monthlyAttendance.filter(a => a.status === "Present").length,
+      totalAbsent: monthlyAttendance.filter(a => a.status === "Absent").length,
+      totalDays: monthlyAttendance.length
+    };
+  };
+
   const getAttendanceForDate = (date) => {
     return attendance.find(a => {
       const attDate = new Date(a.date);
@@ -92,9 +107,25 @@ const AdminAttendanceView = () => {
   };
 
   const changeMonth = (direction) => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
     setSelectedMonth(prev => {
       const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + direction);
+      const newMonth = prev.getMonth() + direction;
+      const newYear = prev.getFullYear();
+      
+      // Don't allow going to future months
+      if (direction === 1) {
+        const targetDate = new Date(newYear, newMonth, 1);
+        const todayDate = new Date(currentYear, currentMonth, 1);
+        if (targetDate > todayDate) {
+          return prev; // Don't change if trying to go to future
+        }
+      }
+      
+      newDate.setMonth(newMonth);
       return newDate;
     });
   };
@@ -104,7 +135,7 @@ const AdminAttendanceView = () => {
     const days = [];
     
     for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(<div key={`empty-${i}`} className="h-20 bg-slate-50 rounded-lg"></div>);
+      days.push(<div key={`empty-${i}`} className="h-12 bg-slate-50 rounded-xl"></div>);
     }
     
     for (let day = 1; day <= daysInMonth; day++) {
@@ -112,42 +143,21 @@ const AdminAttendanceView = () => {
       const att = getAttendanceForDate(currentDate);
       const isToday = currentDate.toDateString() === new Date().toDateString();
       const isPresent = att?.status === "Present";
+      const isAbsent = att?.status === "Absent";
       
       days.push(
-        <button
+        <div
           key={day}
           onClick={() => att && setSelectedLog(att)}
-          className={`h-24 rounded-lg border-2 p-2 transition-all overflow-hidden ${
-            isToday ? "border-indigo-600 bg-indigo-50" : "border-slate-100 bg-white"
-          } ${att ? "cursor-pointer hover:shadow-lg" : "cursor-default"}`}
+          className={`h-12 w-12 rounded-xl flex items-center justify-center text-sm font-bold transition-all cursor-pointer
+            ${isPresent ? "bg-green-500 text-white shadow-md hover:shadow-lg" : 
+              isAbsent ? "bg-red-500 text-white shadow-md hover:shadow-lg" : 
+              "bg-slate-100 text-slate-600"}
+            ${isToday && isPresent ? "ring-4 ring-green-400 scale-110" : ""}
+            ${isToday && isAbsent ? "ring-4 ring-red-400 scale-110" : ""}`}
         >
-          <div className="flex justify-between items-start mb-1">
-            <span className={`text-sm font-bold ${
-              isToday ? "text-indigo-600" : "text-slate-600"
-            }`}>{day}</span>
-            {att && (
-              <div className={`h-2 w-2 rounded-full flex-shrink-0 ${
-                isPresent ? "bg-green-500" : "bg-red-500"
-              }`}></div>
-            )}
-          </div>
-          {att && (
-            <div className="text-[9px] text-slate-500 space-y-0.5">
-              {(att.entryTime || att.checkIn) && (
-                <div className="flex items-center gap-0.5 truncate">
-                  <span className="text-green-600 flex-shrink-0">↓</span>
-                  <span className="truncate">{new Date(att.entryTime || att.checkIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              )}
-              {(att.exitTime || att.checkOut) && (
-                <div className="flex items-center gap-0.5 truncate">
-                  <span className="text-red-600 flex-shrink-0">↑</span>
-                  <span className="truncate">{new Date(att.exitTime || att.checkOut).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </button>
+          {day}
+        </div>
       );
     }
     
@@ -239,48 +249,61 @@ const AdminAttendanceView = () => {
         <div className="bg-white rounded-2xl p-6 border border-slate-100">
           <h3 className="text-lg font-black text-slate-800 mb-4">Recent Attendance Records</h3>
           <div className="space-y-3 max-h-96 overflow-y-auto">
-            {recentAttendance.slice(0, 10).map((record) => (
-              <button
-                key={record._id}
-                onClick={() => setSelectedLog(record)}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                    record.status === "Present" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                  }`}>
-                    {record.status === "Present" ? "✓" : "✗"}
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-slate-800">
-                      {activeTab === "student" 
-                        ? record.student?.name || "Unknown"
-                        : record.staff?.name || "Unknown"}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-slate-500">
-                      <span>{new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
-                      {(record.entryTime || record.checkIn) && (
-                        <span className="flex items-center gap-1">
-                          <span className="text-green-600">↓</span>
-                          {new Date(record.entryTime || record.checkIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
-                      {(record.exitTime || record.checkOut) && (
-                        <span className="flex items-center gap-1">
-                          <span className="text-red-600">↑</span>
-                          {new Date(record.exitTime || record.checkOut).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
+            {recentAttendance.slice(0, 10).map((record) => {
+              const person = activeTab === "student" 
+                ? record.student 
+                : record.staff;
+              
+              return (
+                <button
+                  key={record._id}
+                  onClick={() => {
+                    if (person) {
+                      selectPerson(person);
+                    } else {
+                      setSelectedLog(record);
+                    }
+                  }}
+                  className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                      record.status === "Present" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+                    }`}>
+                      {record.status === "Present" ? "✓" : "✗"}
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-slate-800">
+                        {person?.name || "Unknown"}
+                      </p>
+                      <p className="text-xs text-slate-400 mb-1">
+                        {activeTab === "student" ? person?.studentId : person?.staffId}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
+                        <span>{new Date(record.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
+                        {(record.entryTime || record.checkIn) && (
+                          <span className="flex items-center gap-1">
+                            <span className="text-green-600">↓</span>
+                            {new Date(record.entryTime || record.checkIn).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                        {(record.exitTime || record.checkOut) && (
+                          <span className="flex items-center gap-1">
+                            <span className="text-red-600">↑</span>
+                            {new Date(record.exitTime || record.checkOut).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                  record.status === "Present" ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                }`}>
-                  {record.status}
-                </span>
-              </button>
-            ))}
+                  <span className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                    record.status === "Present" ? "bg-green-500 text-white" : "bg-red-500 text-white"
+                  }`}>
+                    {record.status}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -288,16 +311,38 @@ const AdminAttendanceView = () => {
       {/* Calendar */}
       {selectedPerson && (
         <div className="bg-white rounded-2xl p-6 border border-slate-100">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-green-50 p-4 rounded-2xl text-center">
+              <p className="text-sm font-bold text-green-600">Present</p>
+              <p className="text-3xl font-black text-green-700">{getMonthlyStats().totalPresent}</p>
+            </div>
+            <div className="bg-red-50 p-4 rounded-2xl text-center">
+              <p className="text-sm font-bold text-red-600">Absent</p>
+              <p className="text-3xl font-black text-red-700">{getMonthlyStats().totalAbsent}</p>
+            </div>
+            <div className="bg-indigo-50 p-4 rounded-2xl text-center">
+              <p className="text-sm font-bold text-indigo-600">Total Days</p>
+              <p className="text-3xl font-black text-indigo-700">{getMonthlyStats().totalDays}</p>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 rounded-lg">
               <ChevronLeft size={20} />
             </button>
-            <h3 className="text-xl font-black text-slate-800">
+            <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+              <Calendar size={20} />
               {selectedMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
             </h3>
             <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 rounded-lg">
               <ChevronRight size={20} />
             </button>
+          </div>
+
+          <div className="flex gap-2 text-xs font-bold mb-4 justify-end">
+            <span className="flex items-center gap-1 text-white bg-green-500 px-3 py-1 rounded-lg">● Present</span>
+            <span className="flex items-center gap-1 text-white bg-red-500 px-3 py-1 rounded-lg">● Absent</span>
           </div>
 
           <div className="grid grid-cols-7 gap-2 mb-2">
@@ -313,7 +358,7 @@ const AdminAttendanceView = () => {
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-3">
               {renderCalendar()}
             </div>
           )}

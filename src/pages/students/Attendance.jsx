@@ -73,9 +73,46 @@ const Attendance = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* --- Left: Calendar Heatmap --- */}
         <div className="lg:col-span-2 bg-white rounded-2xl md:rounded-[2.5rem] p-3 md:p-6 shadow-sm border border-slate-100">
+          {/* Monthly Stats */}
+          <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 md:mb-6">
+            <div className="bg-green-50 p-2 md:p-4 rounded-xl md:rounded-2xl text-center">
+              <p className="text-xs font-bold text-green-600">Present</p>
+              <p className="text-lg md:text-3xl font-black text-green-700">
+                {attendanceLogs.filter(log => {
+                  const logDate = new Date(log.date);
+                  return logDate.getMonth() === currentMonth && 
+                         logDate.getFullYear() === currentYear && 
+                         log.status === "Present";
+                }).length}
+              </p>
+            </div>
+            <div className="bg-red-50 p-2 md:p-4 rounded-xl md:rounded-2xl text-center">
+              <p className="text-xs font-bold text-red-600">Absent</p>
+              <p className="text-lg md:text-3xl font-black text-red-700">
+                {attendanceLogs.filter(log => {
+                  const logDate = new Date(log.date);
+                  return logDate.getMonth() === currentMonth && 
+                         logDate.getFullYear() === currentYear && 
+                         log.status === "Absent";
+                }).length}
+              </p>
+            </div>
+            <div className="bg-indigo-50 p-2 md:p-4 rounded-xl md:rounded-2xl text-center">
+              <p className="text-xs font-bold text-indigo-600">Total Days</p>
+              <p className="text-lg md:text-3xl font-black text-indigo-700">
+                {attendanceLogs.filter(log => {
+                  const logDate = new Date(log.date);
+                  return logDate.getMonth() === currentMonth && 
+                         logDate.getFullYear() === currentYear;
+                }).length}
+              </p>
+            </div>
+          </div>
+          
           <div className="flex flex-col gap-3 md:gap-4 mb-4 md:mb-6">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-              <h3 className="text-base md:text-xl font-black text-slate-800 tracking-tight">
+              <h3 className="text-base md:text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                <CalendarIcon size={20} />
                 {new Date(currentYear, currentMonth).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
               </h3>
               <div className="flex gap-1 md:gap-2">
@@ -112,8 +149,7 @@ const Attendance = () => {
               </div>
             </div>
             <div className="flex gap-1 text-[8px] md:text-xs font-bold flex-wrap">
-              <span className="flex items-center gap-1 text-white bg-green-500 px-2 py-0.5 rounded">● Student</span>
-              <span className="flex items-center gap-1 text-white bg-purple-500 px-2 py-0.5 rounded">● Staff/Admin</span>
+              <span className="flex items-center gap-1 text-white bg-green-500 px-2 py-0.5 rounded">● Present</span>
               <span className="flex items-center gap-1 text-white bg-red-500 px-2 py-0.5 rounded">● Absent</span>
             </div>
           </div>
