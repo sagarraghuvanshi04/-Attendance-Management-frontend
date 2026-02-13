@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   // baseURL: "http://localhost:5000/api",
-  baseURL: "https://university-management-api.onrender.com/api",
+  baseURL: "https://librarymanagementbackend-ztsr.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
