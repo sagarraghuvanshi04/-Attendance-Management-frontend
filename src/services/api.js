@@ -6,6 +6,7 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
   timeout: 120000,
+  withCredentials: false,
 });
 
 // Request deduplication
