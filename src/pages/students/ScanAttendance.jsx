@@ -13,7 +13,11 @@ const ScanAttendance = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    const config = { 
+      fps: 10, 
+      qrbox: { width: 250, height: 250 },
+      facingMode: "environment"
+    };
     const scanner = new Html5QrcodeScanner("qr-reader", config, false);
 
     scanner.render(
