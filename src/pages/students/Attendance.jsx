@@ -200,13 +200,13 @@ const Attendance = () => {
                     bgColor = "bg-red-500";
                     textColor = "text-white";
                   } else if (isPresent && isStudentMarked) {
-                    bgColor = "bg-green-500";
+                    bgColor = "bg-emerald-500";
                     textColor = "text-white";
                   } else if (isPresent && isStaffAdminMarked) {
                     bgColor = "bg-purple-500";
                     textColor = "text-white";
                   } else if (isPresent && isSystemMarked) {
-                    bgColor = "bg-green-500";
+                    bgColor = "bg-emerald-500";
                     textColor = "text-white";
                   }
                 }
