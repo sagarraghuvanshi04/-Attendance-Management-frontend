@@ -118,25 +118,25 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 px-6">
+    <div className="p-2 md:p-6 space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
             Library <span className="text-indigo-600">Command</span>
           </h1>
-          <p className="text-slate-500 font-medium flex items-center gap-2 mt-1">
-            <Activity size={16} className="text-emerald-500" /> 
+          <p className="text-slate-500 font-medium flex items-center gap-2 mt-1 text-sm md:text-base">
+            <Activity size={14} className="text-emerald-500 md:w-4 md:h-4" /> 
             Everything is running smoothly today
           </p>
         </div>
         
         <div className="relative w-full md:w-auto">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 bg-white p-2 rounded-[1.5rem] shadow-sm border border-slate-100 flex-1 md:flex-none">
-              <div className="bg-slate-50 p-2 rounded-xl text-slate-400">
-                <Search size={20} />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex items-center gap-2 md:gap-3 bg-white p-2 rounded-xl md:rounded-[1.5rem] shadow-sm border border-slate-100 flex-1 md:flex-none">
+              <div className="bg-slate-50 p-1.5 md:p-2 rounded-lg md:rounded-xl text-slate-400">
+                <Search size={16} className="md:w-5 md:h-5" />
               </div>
               <input 
                 type="text" 
@@ -149,19 +149,19 @@ const Dashboard = () => {
             </div>
             <button
               onClick={() => navigate('/admin/profile')}
-              className="h-12 w-12 rounded-xl overflow-hidden border-2 border-indigo-100 hover:border-indigo-600 transition-all shadow-sm hover:shadow-md flex-shrink-0"
+              className="h-10 w-10 md:h-12 md:w-12 rounded-lg md:rounded-xl overflow-hidden border-2 border-indigo-100 hover:border-indigo-600 transition-all shadow-sm hover:shadow-md flex-shrink-0"
             >
               {adminProfile?.profilePic ? (
                 <img src={adminProfile.profilePic} alt="Admin" className="h-full w-full object-cover" />
               ) : (
-                <div className="h-full w-full bg-indigo-600 flex items-center justify-center text-white font-black text-lg">
+                <div className="h-full w-full bg-indigo-600 flex items-center justify-center text-white font-black text-sm md:text-lg">
                   {adminProfile?.name?.charAt(0) || 'A'}
                 </div>
               )}
             </button>
           </div>
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+            <div className="absolute top-full mt-2 w-full bg-white rounded-xl md:rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
               {searchResults.map((student) => (
                 <button
                   key={student._id}
@@ -170,13 +170,13 @@ const Dashboard = () => {
                     setShowSearchResults(false);
                     setSearchQuery("");
                   }}
-                  className="w-full p-4 hover:bg-slate-50 transition-colors text-left flex items-center justify-between border-b border-slate-50 last:border-0"
+                  className="w-full p-3 md:p-4 hover:bg-slate-50 transition-colors text-left flex items-center justify-between border-b border-slate-50 last:border-0"
                 >
                   <div>
-                    <p className="font-bold text-slate-800">{student.name}</p>
+                    <p className="font-bold text-slate-800 text-sm md:text-base">{student.name}</p>
                     <p className="text-xs text-slate-500">{student.studentId} • {student.email}</p>
                   </div>
-                  <ChevronRight size={16} className="text-slate-400" />
+                  <ChevronRight size={14} className="text-slate-400 md:w-4 md:h-4" />
                 </button>
               ))}
             </div>
@@ -185,115 +185,115 @@ const Dashboard = () => {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, i) => (
           <button
             key={i}
             onClick={() => navigate(stat.path)}
-            className="group relative bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left overflow-hidden"
+            className="group relative bg-white p-4 md:p-6 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left overflow-hidden"
           >
-            <div className={`h-14 w-14 ${stat.bg} ${stat.color} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500`}>
-              {React.cloneElement(stat.icon, { size: 28 })}
+            <div className={`h-10 w-10 md:h-14 md:w-14 ${stat.bg} ${stat.color} rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-5 group-hover:scale-110 transition-transform duration-500`}>
+              {React.cloneElement(stat.icon, { size: window.innerWidth >= 768 ? 28 : 20 })}
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
-            <p className="text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
+            <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
+            <p className="text-xl md:text-3xl font-black text-slate-900 mt-1">{stat.value}</p>
             
             {/* Hover Arrow */}
-            <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300">
-              <ArrowUpRight size={20} />
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300">
+              <ArrowUpRight size={16} className="md:w-5 md:h-5" />
             </div>
           </button>
         ))}
       </div>
 
       {/* Live Students & Live Scan Feed - Full Width */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 mb-6 md:mb-8">
         {/* Live Students Section */}
-        <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
+        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-4 md:mb-6">
             <div>
-              <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+              <h3 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
+                <div className="h-2 w-2 md:h-3 md:w-3 bg-green-500 rounded-full animate-pulse"></div>
                 Live Students
               </h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Currently in library</p>
+              <p className="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Currently in library</p>
             </div>
             <button 
               onClick={() => navigate('/admin/attendance?filter=live')}
-              className="text-xs font-black text-green-600 bg-green-50 px-4 py-2 rounded-xl hover:bg-green-100 transition-colors"
+              className="text-[10px] md:text-xs font-black text-green-600 bg-green-50 px-2 md:px-4 py-1 md:py-2 rounded-lg md:rounded-xl hover:bg-green-100 transition-colors"
             >
               View All
             </button>
           </div>
           
-          <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-hide">
+          <div className="space-y-2 md:space-y-3 max-h-60 md:max-h-80 overflow-y-auto scrollbar-hide">
             {liveStudents.length > 0 ? (
               liveStudents.slice(0, 4).map((student, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-100 hover:bg-green-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-green-500 rounded-lg flex items-center justify-center text-white font-black text-sm">
+                <div key={index} className="flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl bg-green-50 border border-green-100 hover:bg-green-100 transition-colors">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="h-8 w-8 md:h-10 md:w-10 bg-green-500 rounded-lg flex items-center justify-center text-white font-black text-xs md:text-sm">
                       {student.seat || '?'}
                     </div>
                     <div>
-                      <p className="font-black text-slate-800 text-sm">{student.name}</p>
-                      <p className="text-xs text-green-600 font-bold">{student.studentId}</p>
+                      <p className="font-black text-slate-800 text-xs md:text-sm">{student.name}</p>
+                      <p className="text-[10px] md:text-xs text-green-600 font-bold">{student.studentId}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-green-600">
+                    <p className="text-[10px] md:text-xs font-bold text-green-600">
                       {student.entryTime ? new Date(student.entryTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'N/A'}
                     </p>
-                    <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse mx-auto mt-1"></div>
+                    <div className="h-1.5 w-1.5 md:h-2 md:w-2 bg-green-500 rounded-full animate-pulse mx-auto mt-1"></div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 text-slate-400">
-                <Activity size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-bold">No students currently present</p>
+              <div className="text-center py-6 md:py-8 text-slate-400">
+                <Activity size={24} className="mx-auto mb-2 opacity-50 md:w-8 md:h-8" />
+                <p className="text-xs md:text-sm font-bold">No students currently present</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Live Scan Feed */}
-        <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-black text-slate-800">Live Scan Feed</h3>
+        <div className="bg-white p-4 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-4 md:mb-6">
+            <h3 className="text-lg md:text-xl font-black text-slate-800">Live Scan Feed</h3>
             <button 
               onClick={() => navigate('/admin/attendance')}
-              className="text-xs font-black text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors"
+              className="text-[10px] md:text-xs font-black text-indigo-600 bg-indigo-50 px-2 md:px-4 py-1 md:py-2 rounded-lg md:rounded-xl hover:bg-indigo-100 transition-colors"
             >
               View All
             </button>
           </div>
-          <div className="space-y-3 max-h-80 overflow-y-auto scrollbar-hide">
+          <div className="space-y-2 md:space-y-3 max-h-60 md:max-h-80 overflow-y-auto scrollbar-hide">
             {dashboardStats.recentScans?.length > 0 ? (
               dashboardStats.recentScans.slice(0, 4).map((scan, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${scan.type === 'Entry' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                <div key={index} className="flex items-center justify-between p-2 md:p-3 rounded-lg md:rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className={`h-8 w-8 md:h-10 md:w-10 rounded-lg flex items-center justify-center ${scan.type === 'Entry' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
                       {scan.type === 'Entry' ? '→' : '←'}
                     </div>
                     <div>
-                      <p className="font-black text-slate-800 text-sm">{scan.studentName || 'Unknown'}</p>
-                      <p className="text-xs text-slate-500 font-bold">{scan.studentId || 'N/A'}</p>
+                      <p className="font-black text-slate-800 text-xs md:text-sm">{scan.studentName || 'Unknown'}</p>
+                      <p className="text-[10px] md:text-xs text-slate-500 font-bold">{scan.studentId || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold text-slate-600">
+                    <p className="text-[10px] md:text-xs font-bold text-slate-600">
                       {scan.time || 'N/A'}
                     </p>
-                    <p className={`text-xs font-black uppercase ${scan.type === 'Entry' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    <p className={`text-[10px] md:text-xs font-black uppercase ${scan.type === 'Entry' ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {scan.type}
                     </p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 text-slate-400">
-                <Activity size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm font-bold">No recent scans</p>
+              <div className="text-center py-6 md:py-8 text-slate-400">
+                <Activity size={24} className="mx-auto mb-2 opacity-50 md:w-8 md:h-8" />
+                <p className="text-xs md:text-sm font-bold">No recent scans</p>
               </div>
             )}
           </div>
@@ -301,23 +301,23 @@ const Dashboard = () => {
       </div>
 
       {/* Seat Map & System Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
         {/* Seat Map */}
-        <div className="lg:col-span-8 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
+        <div className="lg:col-span-8 bg-white p-4 md:p-8 rounded-2xl md:rounded-[3rem] border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-4 md:mb-8">
             <div>
-              <h3 className="text-xl font-black text-slate-800">Seat Occupancy Map</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Real-time status</p>
+              <h3 className="text-lg md:text-xl font-black text-slate-800">Seat Occupancy Map</h3>
+              <p className="text-[9px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Real-time status</p>
             </div>
             <button 
               onClick={() => navigate('/admin/students')}
-              className="text-xs font-black text-indigo-600 bg-indigo-50 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors"
+              className="text-[10px] md:text-xs font-black text-indigo-600 bg-indigo-50 px-2 md:px-4 py-1 md:py-2 rounded-lg md:rounded-xl hover:bg-indigo-100 transition-colors"
             >
               Manage Seats
             </button>
           </div>
           
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
+          <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 md:gap-3">
             {[...Array(dashboardStats.totalSeats || 0)].map((_, i) => {
               const seatNumber = String(i + 1).padStart(2, '0');
               const isOccupied = dashboardStats.occupiedSeats?.includes(seatNumber);
@@ -327,18 +327,18 @@ const Dashboard = () => {
                 <div 
                   key={i} 
                   title={`Seat ${seatNumber} - ${isLive ? 'Live (In Library)' : isOccupied ? 'Occupied' : 'Available'}`}
-                  className={`h-8 rounded-lg cursor-help transition-all hover:scale-125 relative
+                  className={`h-6 md:h-8 rounded-md md:rounded-lg cursor-help transition-all hover:scale-125 relative
                     ${isLive ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-100 animate-pulse' : 
                       isOccupied ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-lg shadow-red-100' : 
                       'bg-gradient-to-br from-green-500 to-green-600 shadow-lg shadow-green-100'}
                   `} 
                 >
-                  {isLive && <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] font-black">●</div>}
+                  {isLive && <div className="absolute inset-0 flex items-center justify-center text-white text-[6px] md:text-[8px] font-black">●</div>}
                 </div>
               );
             })}
           </div>
-          <div className="mt-8 flex gap-6">
+          <div className="mt-4 md:mt-8 flex flex-wrap gap-3 md:gap-6">
             <LegendItem color="bg-orange-500 animate-pulse" label="Live (In Library)" />
             <LegendItem color="bg-red-500" label="Occupied" />
             <LegendItem color="bg-green-500" label="Available" />
@@ -346,27 +346,27 @@ const Dashboard = () => {
         </div>
 
         {/* System Health */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className="bg-slate-900 p-8 rounded-[3rem] text-white relative overflow-hidden group shadow-2xl">
-            <h3 className="text-xl font-black mb-6 text-indigo-400">System Health</h3>
-            <div className="space-y-5 relative z-10">
+        <div className="lg:col-span-4 flex flex-col gap-4 md:gap-6">
+          <div className="bg-slate-900 p-4 md:p-8 rounded-2xl md:rounded-[3rem] text-white relative overflow-hidden group shadow-2xl">
+            <h3 className="text-lg md:text-xl font-black mb-4 md:mb-6 text-indigo-400">System Health</h3>
+            <div className="space-y-3 md:space-y-5 relative z-10">
                <HealthRow label="Server Status" value="Online" color="text-emerald-400" />
                <HealthRow label="Database" value="Synced" color="text-emerald-400" />
                <HealthRow label="Daily Backup" value="Completed" color="text-blue-400" />
             </div>
-            <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-indigo-600/20 blur-3xl group-hover:bg-indigo-600/40 transition-all duration-700" />
+            <div className="absolute -bottom-10 -right-10 h-24 w-24 md:h-32 md:w-32 bg-indigo-600/20 blur-3xl group-hover:bg-indigo-600/40 transition-all duration-700" />
           </div>
 
           <button 
             onClick={() => navigate('/admin/settings')}
-            className="flex-1 bg-indigo-600 p-8 rounded-[3rem] text-white flex flex-col justify-between group hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
+            className="flex-1 bg-indigo-600 p-4 md:p-8 rounded-2xl md:rounded-[3rem] text-white flex flex-col justify-between group hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
           >
             <div className="flex justify-between w-full">
-              <div className="bg-white/20 p-3 rounded-2xl">{SettingsIcon()}</div>
-              <ChevronRight className="group-hover:translate-x-2 transition-transform" />
+              <div className="bg-white/20 p-2 md:p-3 rounded-xl md:rounded-2xl">{SettingsIcon()}</div>
+              <ChevronRight className="group-hover:translate-x-2 transition-transform" size={20} />
             </div>
-            <div className="text-left mt-4">
-              <p className="font-black text-xl leading-tight">System Settings</p>
+            <div className="text-left mt-3 md:mt-4">
+              <p className="font-black text-lg md:text-xl leading-tight">System Settings</p>
               <p className="text-indigo-200 text-xs font-medium mt-1">Manage library timings & profile</p>
             </div>
           </button>
@@ -378,16 +378,16 @@ const Dashboard = () => {
 
 /* --- Helper Components --- */
 const LegendItem = ({ color, label }) => (
-  <div className="flex items-center gap-2">
-    <div className={`h-3 w-3 rounded-full ${color}`} />
-    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+  <div className="flex items-center gap-1 md:gap-2">
+    <div className={`h-2 w-2 md:h-3 md:w-3 rounded-full ${color}`} />
+    <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
   </div>
 );
 
 const HealthRow = ({ label, value, color }) => (
   <div className="flex justify-between items-center py-1">
-    <span className="text-sm font-bold text-slate-400">{label}</span>
-    <span className={`text-sm font-black ${color}`}>{value}</span>
+    <span className="text-xs md:text-sm font-bold text-slate-400">{label}</span>
+    <span className={`text-xs md:text-sm font-black ${color}`}>{value}</span>
   </div>
 );
 
