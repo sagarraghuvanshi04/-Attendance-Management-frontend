@@ -2,16 +2,31 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/$/, "");
 
+const baseQuery = fetchBaseQuery({
+  baseUrl: BASE_URL,
+  prepareHeaders: (headers) => {
+    const token = localStorage.getItem("workToken");
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    return headers;
+  },
+});
+
+// Wrap base query to handle network errors gracefully
+const baseQueryWithErrorHandling = async (args, api, extraOptions) => {
+  try {
+    const result = await baseQuery(args, api, extraOptions);
+    if (result.error?.status === "FETCH_ERROR") {
+      return { error: { status: "FETCH_ERROR", data: { message: "No internet connection. Please check your network and try again." } } };
+    }
+    return result;
+  } catch {
+    return { error: { status: "FETCH_ERROR", data: { message: "Network error. Please check your connection." } } };
+  }
+};
+
 export const attendanceApi = createApi({
   reducerPath: "attendanceApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: BASE_URL,
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("workToken");
-      if (token) headers.set("Authorization", `Bearer ${token}`);
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithErrorHandling,
   tagTypes: ["Attendance", "Users", "OT", "Report", "Notifications"],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────

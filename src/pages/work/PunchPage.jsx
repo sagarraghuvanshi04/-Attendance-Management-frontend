@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useGetTodayStatusQuery, usePunchInMutation, usePunchOutMutation } from "../../store/attendanceApi";
 import toast from "react-hot-toast";
-import SelfieCapture from "../../components/SelfieCapture";
+import FaceRecognition from "../../components/FaceRecognition";
 
 export default function PunchPage() {
   const { data, isLoading: fetching, refetch } = useGetTodayStatusQuery();
   const [punchIn, { isLoading: punchingIn }] = usePunchInMutation();
   const [punchOut, { isLoading: punchingOut }] = usePunchOutMutation();
 
-  const [selfie, setSelfie] = useState(null);
+  const [faceData, setFaceData] = useState(null); // { selfie, faceDescriptor }
   const [location, setLocation] = useState(null);
   const [locError, setLocError] = useState("");
   const [locBlocked, setLocBlocked] = useState(false);
@@ -23,68 +23,60 @@ export default function PunchPage() {
     if (navigator.permissions) {
       try {
         const result = await navigator.permissions.query({ name: "geolocation" });
-        if (result.state === "denied") {
-          setLocBlocked(true);
-          setLocError("blocked");
-          return;
-        }
+        if (result.state === "denied") { setLocBlocked(true); setLocError("blocked"); return; }
         result.onchange = () => {
-          if (result.state === "granted") {
-            setLocBlocked(false);
-            setLocError("");
-            getLocation();
-          } else if (result.state === "denied") {
-            setLocBlocked(true);
-            setLocError("blocked");
-          }
+          if (result.state === "granted") { setLocBlocked(false); setLocError(""); getLocation(); }
+          else if (result.state === "denied") { setLocBlocked(true); setLocError("blocked"); }
         };
-      } catch { /* permissions API not supported */ }
+      } catch { }
     }
     getLocation();
   };
 
   const getLocation = () => {
-    if (!navigator.geolocation) {
-      setLocError("Geolocation is not supported by your browser.");
-      return;
-    }
+    if (!navigator.geolocation) { setLocError("Geolocation not supported."); return; }
     setLocLoading(true);
     setLocError("");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-        setLocBlocked(false);
-        setLocError("");
-        setLocLoading(false);
+        setLocBlocked(false); setLocError(""); setLocLoading(false);
       },
       (err) => {
         setLocLoading(false);
-        if (err.code === 1) {
-          setLocBlocked(true);
-          setLocError("blocked");
-        } else if (err.code === 2) {
-          setLocError("Location unavailable. Check your device GPS/network.");
-        } else if (err.code === 3) {
-          setLocError("Location request timed out. Please retry.");
-        } else {
-          setLocError(err.message || "Failed to get location.");
-        }
+        if (err.code === 1) { setLocBlocked(true); setLocError("blocked"); }
+        else if (err.code === 2) setLocError("Location unavailable. Check GPS/network.");
+        else if (err.code === 3) setLocError("Location timed out. Please retry.");
+        else setLocError(err.message || "Failed to get location.");
       },
       { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
     );
   };
 
   const handlePunch = async (type) => {
-    if (!selfie) return toast.error("Please take a selfie first");
-    if (!location) return toast.error("Location is required to punch in/out.");
+    if (!faceData?.selfie) return toast.error("Please complete face scan first");
+    if (!faceData?.faceDescriptor) return toast.error("Face recognition data missing");
+    if (!location) return toast.error("Location is required");
+
     try {
-      const body = { selfie, ...location };
-      const result = type === "in" ? await punchIn(body).unwrap() : await punchOut(body).unwrap();
+      const body = {
+        selfie: faceData.selfie,
+        faceDescriptor: faceData.faceDescriptor,
+        ...location,
+      };
+      const result = type === "in"
+        ? await punchIn(body).unwrap()
+        : await punchOut(body).unwrap();
       toast.success(result.message);
-      setSelfie(null);
+      setFaceData(null);
       refetch();
     } catch (err) {
-      toast.error(err.data?.message || "Failed");
+      const msg = err.data?.message || "Failed";
+      if (err.status === 403) {
+        toast.error(msg, { duration: 8000, icon: "🚫", style: { maxWidth: "400px" } });
+      } else {
+        toast.error(msg);
+      }
     }
   };
 
@@ -102,6 +94,20 @@ export default function PunchPage() {
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-gray-800">Punch In / Out</h1>
+
+      {/* Face Recognition Info Banner */}
+      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-start gap-3">
+        <span className="text-2xl">🔐</span>
+        <div>
+          <p className="font-semibold text-indigo-800 text-sm">Face Recognition Enabled</p>
+          <p className="text-xs text-indigo-600 mt-0.5">
+            Your face is scanned and verified to prevent proxy attendance.
+            {canPunchIn
+              ? " First punch-in registers your face."
+              : " Punch-out verifies your face matches punch-in."}
+          </p>
+        </div>
+      </div>
 
       {/* Status Card */}
       <div className="bg-white rounded-2xl shadow p-6 space-y-4">
@@ -163,21 +169,18 @@ export default function PunchPage() {
           <div className="bg-white rounded-xl p-4 space-y-2 text-sm text-gray-700">
             <p className="font-semibold text-gray-800 mb-1">How to reset in Chrome:</p>
             {[
-              <>Click the <strong>🔒 lock icon</strong> (or tune icon) in the address bar</>,
+              <>Click the <strong>🔒 lock icon</strong> in the address bar</>,
               <>Click <strong>"Site settings"</strong></>,
-              <>Find <strong>"Location"</strong> → change from <strong>"Block"</strong> to <strong>"Allow"</strong></>,
-              <><strong>Reload this page</strong> then click Retry below</>,
+              <>Find <strong>"Location"</strong> → change to <strong>"Allow"</strong></>,
+              <><strong>Reload</strong> and click Retry</>,
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-2">
-                <span className="bg-orange-100 text-orange-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
-                  {i + 1}
-                </span>
+                <span className="bg-orange-100 text-orange-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
                 <p>{step}</p>
               </div>
             ))}
           </div>
-          <button
-            onClick={() => { setLocBlocked(false); setLocError(""); getLocation(); }}
+          <button onClick={() => { setLocBlocked(false); setLocError(""); getLocation(); }}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-sm font-semibold transition">
             🔄 Retry Location
           </button>
@@ -204,32 +207,41 @@ export default function PunchPage() {
         </div>
       )}
 
-      {/* Punch Action */}
+      {/* Face Scan + Punch Action */}
       {!done && (
         <div className="bg-white rounded-2xl shadow p-6 space-y-5">
           <h2 className="font-semibold text-gray-700 text-lg">
-            {canPunchIn ? "🟢 Punch In" : "🔴 Punch Out"} — Capture Selfie
+            {canPunchIn ? "🟢 Punch In" : "🔴 Punch Out"} — Face Verification
           </h2>
-          <SelfieCapture
-            onCapture={setSelfie}
-            label={canPunchIn ? "Take Punch-In Selfie" : "Take Punch-Out Selfie"}
+
+          <FaceRecognition
+            onCapture={setFaceData}
+            label={canPunchIn ? "Start Face Scan for Punch In" : "Start Face Scan for Punch Out"}
           />
-          {selfie && (
+
+          {faceData?.selfie && (
             <button
               onClick={() => handlePunch(canPunchIn ? "in" : "out")}
               disabled={loading || !location}
               className={`w-full py-3 rounded-xl font-semibold text-white transition disabled:opacity-60 ${
                 canPunchIn ? "bg-green-600 hover:bg-green-700" : "bg-red-500 hover:bg-red-600"
               }`}>
-              {loading ? "Processing..." : !location ? "⚠️ Location Required" : canPunchIn ? "✅ Confirm Punch In" : "🔴 Confirm Punch Out"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Verifying face & marking attendance...
+                </span>
+              ) : !location ? "⚠️ Location Required"
+                : canPunchIn ? "✅ Confirm Punch In" : "🔴 Confirm Punch Out"}
             </button>
           )}
         </div>
       )}
 
+      {/* Completed */}
       {done && (
         <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-center text-white">
-          <p className="text-2xl mb-1">🎉</p>
+          <p className="text-3xl mb-2">🎉</p>
           <p className="font-bold text-lg">Attendance Completed!</p>
           <p className="text-green-100 text-sm mt-1">Total working hours: {todayRecord.workingHours}h</p>
           <p className={`text-sm mt-1 font-semibold ${todayRecord.workingHours >= 8 ? "text-green-200" : "text-yellow-200"}`}>
@@ -241,14 +253,14 @@ export default function PunchPage() {
       {/* Selfie Records */}
       {(todayRecord?.punchInSelfie || todayRecord?.punchOutSelfie) && (
         <div className="bg-white rounded-2xl shadow p-6">
-          <h3 className="font-semibold text-gray-700 mb-4">Selfie Records</h3>
+          <h3 className="font-semibold text-gray-700 mb-4">Face Capture Records</h3>
           <div className="flex gap-4">
             {todayRecord.punchInSelfie && (
               <div className="text-center">
                 <img src={todayRecord.punchInSelfie} alt="punch-in"
                   className="w-28 h-28 rounded-xl object-cover border-2 border-green-300 cursor-pointer hover:scale-105 transition"
                   onClick={() => window.open(todayRecord.punchInSelfie)} />
-                <p className="text-xs text-gray-500 mt-1">Punch In</p>
+                <p className="text-xs text-gray-500 mt-1">Punch In ✅</p>
               </div>
             )}
             {todayRecord.punchOutSelfie && (
@@ -256,7 +268,7 @@ export default function PunchPage() {
                 <img src={todayRecord.punchOutSelfie} alt="punch-out"
                   className="w-28 h-28 rounded-xl object-cover border-2 border-red-300 cursor-pointer hover:scale-105 transition"
                   onClick={() => window.open(todayRecord.punchOutSelfie)} />
-                <p className="text-xs text-gray-500 mt-1">Punch Out</p>
+                <p className="text-xs text-gray-500 mt-1">Punch Out ✅</p>
               </div>
             )}
           </div>
