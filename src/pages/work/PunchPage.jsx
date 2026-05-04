@@ -8,11 +8,12 @@ export default function PunchPage() {
   const [punchIn, { isLoading: punchingIn }] = usePunchInMutation();
   const [punchOut, { isLoading: punchingOut }] = usePunchOutMutation();
 
-  const [faceData, setFaceData] = useState(null); // { selfie, faceDescriptor }
+  const [faceData, setFaceData] = useState(null);
   const [location, setLocation] = useState(null);
   const [locError, setLocError] = useState("");
   const [locBlocked, setLocBlocked] = useState(false);
   const [locLoading, setLocLoading] = useState(false);
+  const [faceMismatch, setFaceMismatch] = useState(null); // { message, distance }
 
   const todayRecord = data?.record;
   const loading = punchingIn || punchingOut;
@@ -58,24 +59,26 @@ export default function PunchPage() {
     if (!faceData?.faceDescriptor) return toast.error("Face recognition data missing");
     if (!location) return toast.error("Location is required");
 
+    setFaceMismatch(null);
     try {
-      const body = {
-        selfie: faceData.selfie,
-        faceDescriptor: faceData.faceDescriptor,
-        ...location,
-      };
+      const body = { selfie: faceData.selfie, faceDescriptor: faceData.faceDescriptor, ...location };
       const result = type === "in"
         ? await punchIn(body).unwrap()
         : await punchOut(body).unwrap();
       toast.success(result.message);
       setFaceData(null);
+      setFaceMismatch(null);
       refetch();
     } catch (err) {
-      const msg = err.data?.message || "Failed";
       if (err.status === 403) {
-        toast.error(msg, { duration: 8000, icon: "🚫", style: { maxWidth: "400px" } });
+        // Show inline mismatch card — not just a toast
+        setFaceMismatch({
+          message: err.data?.message || "Face verification failed.",
+          distance: err.data?.distance,
+        });
+        setFaceData(null); // force re-scan
       } else {
-        toast.error(msg);
+        toast.error(err.data?.message || "Failed");
       }
     }
   };
@@ -207,8 +210,37 @@ export default function PunchPage() {
         </div>
       )}
 
+      {/* Face Mismatch Error Card */}
+      {faceMismatch && (
+        <div className="bg-red-50 border-2 border-red-400 rounded-2xl p-5 space-y-3">
+          <div className="flex items-start gap-3">
+            <span className="text-3xl">🚫</span>
+            <div>
+              <p className="font-bold text-red-800 text-base">Face Verification Failed</p>
+              <p className="text-sm text-red-700 mt-1">{faceMismatch.message}</p>
+              {faceMismatch.distance !== undefined && (
+                <p className="text-xs text-red-500 mt-1">
+                  Similarity distance: <strong>{faceMismatch.distance}</strong> (allowed: ≤ 0.5)
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-3 text-xs text-gray-600 space-y-1">
+            <p className="font-semibold text-gray-700">What to do:</p>
+            <p>• Make sure you are the same person who punched in</p>
+            <p>• Ensure good lighting — avoid backlighting</p>
+            <p>• Remove glasses or hat if worn during punch-in</p>
+            <p>• Look directly at the camera and stay still during scan</p>
+          </div>
+          <button onClick={() => setFaceMismatch(null)}
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">
+            Try Again
+          </button>
+        </div>
+      )}
+
       {/* Face Scan + Punch Action */}
-      {!done && (
+      {!done && !faceMismatch && (
         <div className="bg-white rounded-2xl shadow p-6 space-y-5">
           <h2 className="font-semibold text-gray-700 text-lg">
             {canPunchIn ? "🟢 Punch In" : "🔴 Punch Out"} — Face Verification

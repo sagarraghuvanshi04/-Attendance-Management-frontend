@@ -259,8 +259,8 @@ Punch Out
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd <repo-folder>
+git clone <https://github.com/sagarraghuvanshi04/Attendance-Management-backend.git>
+          <https://github.com/sagarraghuvanshi04/-Attendance-Management-frontend.git>
 ```
 
 ---
